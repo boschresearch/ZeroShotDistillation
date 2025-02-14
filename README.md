@@ -4,7 +4,10 @@
 [![Video](https://img.shields.io/badge/YouTube-Video-red)](https://www.youtube.com/watch?v=KbdacNWGiAM)
 
 
-This is the official code release for the TMLR publication "Feature Distillation Improves Zero-Shot Transfer from Synthetic Images" by Niclas Popp, Jan Hendrik Metzen and Matthias Hein.
+This is the code release for the TMLR publication "Feature Distillation Improves Zero-Shot Transfer from Synthetic Images" by Niclas Popp, Jan Hendrik Metzen and Matthias Hein. The following figure summarizes the experimental setup:
+
+![overview_figure.png](overview.png)
+
 The codebase consists of three components: 
 
 1. Domain-agnostic Distillation
