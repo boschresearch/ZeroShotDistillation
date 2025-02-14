@@ -16,14 +16,14 @@ The codebase consists of three components:
 The required packages are listed in the requirements.txt file. The code was tested on NVIDIA v100 and h100 gpus.
 
 ## Step 1: Domain-agnostic Distillation
-For an example file to run domain-agnostic distillation together with the available hyperparameters see: 
-The code is built to use the webdataset dataloader together with .tar files. For details in how to setup the data for this kind of dataloader see TO DO
+For an example file to run domain-agnostic distillation together with the available hyperparameters see: [https://github.com/boschresearch/ZeroShotDistillation/blob/main/example_domain_agnostic.sh](https://github.com/boschresearch/ZeroShotDistillation/blob/main/example_domain_agnostic.sh)
+The code is built to use the webdataset dataloader together with .tar files. For details in how to setup the data for this kind of dataloader see [https://github.com/boschresearch/ZeroShotDistillation/blob/main/example_domain_specific.sh](https://github.com/boschresearch/ZeroShotDistillation/blob/main/example_domain_specific.sh)
 
 ## Step 2: Synthetic data Generation
-The synthetic data generation process can be started as shown in the TO DO file. 
+The synthetic data generation process can be started as shown in the [https://github.com/boschresearch/ZeroShotDistillation/blob/main/example_data_generation.sh](https://github.com/boschresearch/ZeroShotDistillation/blob/main/example_data_generation.sh) file. 
 For different domains, select the corresponding dataset option.
 
 ## Step 3: Domain-specific Distillation
 The final step of our framework is domain-specific distillation.
-An example together with the available options is given in the file TO DO. 
+An example together with the available options is given in the file [https://github.com/boschresearch/ZeroShotDistillation/blob/main/example_domain_specific.sh](https://github.com/boschresearch/ZeroShotDistillation/blob/main/example_domain_specific.sh). 
 This step requires the final model checkpoint from step 1 and the synthetic data from step 2.
