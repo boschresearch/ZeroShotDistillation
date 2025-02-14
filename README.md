@@ -6,9 +6,11 @@
 
 This is the official code release for the TMLR publication "Feature Distillation Improves Zero-Shot Transfer from Synthetic Images" by Niclas Popp, Jan Hendrik Metzen and Matthias Hein.
 The codebase consists of three components: 
-++ Step 1: Domain-agnostic Distillation
-++ Step 2: Synthetic Data Generation
-++ Step 3: Domain-specific Distillation
+
+1. Domain-agnostic Distillation
+2. Synthetic Data Generation
+3. Domain-specific Distillation
+
 The required packages are listed in the requirements.txt file. The code was tested on NVIDIA v100 and h100 gpus.
 
 ## Step 1: Domain-agnostic Distillation
