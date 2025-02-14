@@ -1,0 +1,14 @@
+python generate_data.py \
+--train /data/pets \
+--dataset pets \
+--logdir /logs/pets \
+--synthetic_data True \
+--diverse_prompts False \
+--generate_images True \
+--generate_prompts True \
+--all_pairs_prompts False \
+--options_per_attribute 5 \
+--logname finetuning \
+--devices 1 \
+--nodes 1 \
+--nodes 1 \
