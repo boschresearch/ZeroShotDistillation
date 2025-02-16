@@ -17,7 +17,7 @@ The required packages are listed in the requirements.txt file. The code was test
 
 ## Step 1: Domain-agnostic Distillation
 For an example file to run domain-agnostic distillation together with the available hyperparameters see: [example_domain_agnostic.sh](https://github.com/boschresearch/ZeroShotDistillation/blob/main/example_domain_agnostic.sh)
-The code is built to use the webdataset dataloader together with .tar files. For details in how to setup the data for this kind of dataloader see [example_domain_specific.sh](https://github.com/boschresearch/ZeroShotDistillation/blob/main/example_domain_specific.sh)
+The code is built to use the webdataset dataloader together with .tar files. For details in how to setup the data for this kind of dataloader see [here](https://github.com/webdataset/webdataset)
 
 ## Step 2: Synthetic data Generation
 The synthetic data generation process can be started as shown in the [example_data_generation.sh](https://github.com/boschresearch/ZeroShotDistillation/blob/main/example_data_generation.sh) file. 
