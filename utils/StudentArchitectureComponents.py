@@ -42,15 +42,7 @@ class Projection(nn.Module):
     def __init__(self,args):
         super().__init__()
         self.projection = nn.Linear(args.encoder_output_dim, args.embedding_dim)
-        # self.relu = nn.ReLU()
-        # self.fc = nn.Linear(args.embedding_dim, args.embedding_dim)
-        # self.layer_norm = nn.LayerNorm(args.embedding_dim)
     
     def forward(self, x):
         projected = self.projection(x)
-        # x = self.relu(projected)
-        # x = self.fc(x)
-        # x = x + projected
-        # x = self.layer_norm(x)
-        # return x
         return projected
