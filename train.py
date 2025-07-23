@@ -188,8 +188,7 @@ def add_train_args(parser):
     parser.add_argument(
         "--encoder_output_dim",
         type=int,
-        # default=2048, # ResNet50
-        default=512, # ResNet18 
+        default=512,
         help="Dimension of the output of the student vision encoder before the projection head.",
     )
     parser.add_argument(
@@ -485,7 +484,6 @@ class StudentModel(LightningModule):
                 text_features = self.teacher_model.encode_text(photo_prompts_tokenized)
                 # Normalize tokens
                 text_features_normalized = functional.normalize(text_features, p=2, dim=-1)
-                # if (args.normalize_tokens==True):
                 text_features = text_features_normalized
                 # Compute logits of the teacher 
                 logits_teacher = (text_features @ image_features_teacher.T) / torch.exp(self.temperature).item()
@@ -500,7 +498,6 @@ class StudentModel(LightningModule):
         image_features_student = self(x)
         # Normlize student tokens
         image_features_student_normalized = functional.normalize(image_features_student, p=2, dim=-1)
-        # if (args.normalize_tokens==True):
         image_features_student = image_features_student_normalized
         logits_student = (text_features @ image_features_student.T) / torch.exp(self.temperature).item()
 
@@ -545,21 +542,18 @@ class StudentModel(LightningModule):
         # Compute tokens as for training
         image_class_ids = [id for sublist in args.val_class_ids for id in sublist]
         photo_prompts = [inference_prompts(args.dataset,image_class_ids[class_num]) for class_num in y] 
-        # photo_prompts = [caption for caption in c]
         device = "cuda" if torch.cuda.is_available() else "cpu"
         photo_prompts_tokenized = self.tokenizer(photo_prompts).to(device)
         text_features = self.teacher_model.encode_text(photo_prompts_tokenized)
         image_features_teacher = self.teacher_model.encode_image(x)
         image_features_teacher_normalized = functional.normalize(image_features_teacher, p=2, dim=-1)
         text_features_normalized = functional.normalize(text_features, p=2, dim=-1)
-        # if (args.normalize_tokens==True):
         image_features_teacher = image_features_teacher_normalized
         text_features = text_features_normalized
         logits_teacher = (text_features @ image_features_teacher.T) / torch.exp(self.temperature).item()
         reverse_logits_teacher = (image_features_teacher @ text_features.T) / torch.exp(self.temperature).item()
         image_features_student = self(x)
         image_features_student_normalized = functional.normalize(image_features_student, p=2, dim=-1)
-        # if (args.normalize_tokens==True):
         image_features_student = image_features_student_normalized
         #Compute loss as in training
         logits_student = (text_features @ image_features_student.T) / torch.exp(self.temperature).item()
@@ -676,26 +670,19 @@ class StudentModel(LightningModule):
             photo_prompts_tokenized = clip.tokenize(photo_prompts).to(device)
         else:
             photo_prompts_tokenized = self.tokenizer(photo_prompts).to(device)
-        # print("Teacher is on: ", self.teacher_model.device())
-        # print("Data is on: ", x.device)
         text_features = self.teacher_model.encode_text(photo_prompts_tokenized)
         image_features_teacher = self.teacher_model.encode_image(x)
-        # image_features_teacher_normalized = functional.normalize(image_features_teacher, p=2, dim=-1)
-        # text_features_normalized = functional.normalize(text_features, p=2, dim=-1)
         image_features_teacher_normalized=image_features_teacher
         image_features_teacher_normalized /= image_features_teacher_normalized.norm(dim=-1, keepdim=True)
         text_features_normalized=text_features
         text_features_normalized /= text_features_normalized.norm(dim=-1, keepdim=True)
-        # if (args.normalize_tokens==True):
         image_features_teacher = image_features_teacher_normalized
         text_features = text_features_normalized
         logits_teacher = (text_features @ image_features_teacher.T) / torch.exp(self.temperature).item()
         reverse_logits_teacher = (image_features_teacher @ text_features.T) / torch.exp(self.temperature).item()
         image_features_student = self(x)
-        # image_features_student_normalized = functional.normalize(image_features_student, p=2, dim=-1)
         image_features_student_normalized=image_features_student
         image_features_student_normalized /= image_features_student_normalized.norm(dim=-1, keepdim=True)
-        # if (args.normalize_tokens==True):
         image_features_student = image_features_student_normalized
         #Compute loss as in training
         logits_student = (text_features @ image_features_student.T) / torch.exp(self.temperature).item()
@@ -745,9 +732,7 @@ class StudentModel(LightningModule):
             photo_prompts_per_class_tokenized = clip.tokenize(photo_prompts_per_class).to(device)
         else:
             photo_prompts_per_class_tokenized = self.tokenizer(photo_prompts_per_class).to(device)
-        # print(photo_prompts_per_class)
         text_features_per_class = self.teacher_model.encode_text(photo_prompts_per_class_tokenized)
-        # text_features_per_class = functional.normalize(text_features_per_class, p=2, dim=-1)
         text_features_per_class /= text_features_per_class.norm(dim=-1, keepdim=True)
         y_hat = (100.0 * image_features_student_normalized @ text_features_per_class.T).softmax(dim=-1)
         y_hat_teacher = (100.0 * image_features_teacher_normalized @ text_features_per_class.T).softmax(dim=-1)
