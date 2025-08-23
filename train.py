@@ -517,8 +517,8 @@ class StudentModel(LightningModule):
                 print("Select appropriate feature loss")
         # Compute overall loss
         if self.distil_alpha<1.0:
-            contrastive_loss_batch_1 = contrastive_loss(logits_student, logits_teacher, self.temperature)
-            contrastive_loss_batch_2 = contrastive_loss(logits_teacher, logits_student, self.temperature)
+            contrastive_loss_batch_1 = contrastive_loss(image_features_student, text_features, self.temperature)
+            contrastive_loss_batch_2 = contrastive_loss(text_features, image_features_student, self.temperature)
             contrastive_loss_batch = 1/2*(contrastive_loss_batch_1+contrastive_loss_batch_2)
             print(contrastive_loss_batch)
         
@@ -572,8 +572,8 @@ class StudentModel(LightningModule):
                 print("Select appropriate feature loss")
         # Compute overall loss
         if self.distil_alpha<1.0:
-            contrastive_loss_batch_1 = contrastive_loss(logits_student, logits_teacher, self.temperature)
-            contrastive_loss_batch_2 = contrastive_loss(logits_student, logits_teacher, self.temperature)
+            contrastive_loss_batch_1 = contrastive_loss(image_features_student, text_features, self.temperature)
+            contrastive_loss_batch_2 = contrastive_loss(text_features, image_features_student, self.temperature)
             contrastive_loss_batch = 1/2*(contrastive_loss_batch_1+contrastive_loss_batch_2)
         if self.distil_alpha==1.0:
             overall_loss = distill_loss
@@ -701,8 +701,8 @@ class StudentModel(LightningModule):
                 print("Select appropriate feature loss")
         # Compute overall loss
         if self.distil_alpha<1.0:
-            contrastive_loss_batch_1 = contrastive_loss(logits_student, logits_teacher, self.temperature)
-            contrastive_loss_batch_2 = contrastive_loss(logits_teacher, logits_student, self.temperature)
+            contrastive_loss_batch_1 = contrastive_loss(image_features_student, text_features, self.temperature)
+            contrastive_loss_batch_2 = contrastive_loss(text_features, image_features_student, self.temperature)
             contrastive_loss_batch = 1/2*(contrastive_loss_batch_1+contrastive_loss_batch_2)
         if self.distil_alpha==1.0:
             overall_loss = distill_loss
