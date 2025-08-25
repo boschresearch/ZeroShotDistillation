@@ -44,7 +44,6 @@ import sys
 from torchmetrics.regression import KLDivergence
 from utils.generate_prompts import inference_prompts, get_all_pairs_length,read_captions
 
-
 dirname = os.path.dirname(__file__)
 path = os.path.join(dirname, "../../")
 sys.path.insert(1, path)
