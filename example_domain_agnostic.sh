@@ -1,4 +1,4 @@
-python train_cleaned.py \
+python train.py \
 --train /data  \
 --batch_size 8 \
 --epochs 5 \
