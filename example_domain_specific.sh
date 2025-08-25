@@ -1,4 +1,4 @@
-python train_cleaned.py \
+python train.py \
 --train /aircraft \
 --batch_size 8 \
 --epochs 96 \
