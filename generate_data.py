@@ -45,39 +45,6 @@ def add_train_args(parser):
         help="Set to true in order to precompute the image and text embeddings from the teacher.",
     )
     parser.add_argument(
-        "--multistage_distillation",
-        default="True",
-        help="Set to true in order to perform multistage reinforced distillation",
-    )
-    parser.add_argument(
-        "--systematic_error_identification",
-        default="False",
-        help="Set to true in order to perform multistage distillation with systematic error identification.",
-    )
-    parser.add_argument(
-        "--distributed_image_reinforcment",
-        default="True",
-        help="Set to true in order to perform multistage reinforced distillation",
-    )
-    parser.add_argument(
-        "--overwrite_images",
-        default="False",
-        help="Set to true in order to generate new images at selected epochs and overwrite previous training images.",
-    )
-    parser.add_argument(
-        "--reinforcment_steps",
-        nargs="+",
-        action="append",
-        type=int,
-        help="Epoch numbers when to perform renewed image generation.",
-    )
-    parser.add_argument(
-        "--reinforcement_factor",
-        default=0.5,
-        type=float,
-        help="Fraction of images that gets reinforced on.",
-    )
-    parser.add_argument(
         "--Text_to_Image_model",
         type=str,
         help="Path to the model to be used",
