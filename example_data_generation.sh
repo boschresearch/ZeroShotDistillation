@@ -11,4 +11,3 @@ python generate_data.py \
 --logname finetuning \
 --devices 1 \
 --nodes 1 \
---nodes 1 \
