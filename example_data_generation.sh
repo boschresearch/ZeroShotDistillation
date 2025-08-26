@@ -3,10 +3,10 @@ python generate_data.py \
 --dataset pets \
 --logdir /logs/pets \
 --synthetic_data True \
---diverse_prompts False \
+--diverse_prompts True \
 --generate_images True \
 --generate_prompts True \
---all_pairs_prompts False \
+--all_pairs_prompts True \
 --options_per_attribute 5 \
 --logname finetuning \
 --devices 1 \
