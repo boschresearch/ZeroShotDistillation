@@ -4,6 +4,13 @@
 import argparse
 from pytorch_lightning.utilities.types import EVAL_DATALOADERS, TRAIN_DATALOADERS
 import torch
+import os
+import sys
+import random
+import time
+import torch.multiprocessing as mp
+import numpy as np
+
 from utils.CustomImageFolder import ImageCaptionFolder
 from torchvision.datasets import ImageFolder
 from torch.utils.data import DataLoader, random_split, ConcatDataset
@@ -21,14 +28,8 @@ from torch.nn import functional
 from pytorch_lightning import LightningModule, Trainer
 from pytorch_lightning.loggers import TensorBoardLogger
 from pytorch_lightning.callbacks import TQDMProgressBar
-import torch.multiprocessing as mp
-import numpy as np
 from numpy.linalg import norm
 from torchmetrics import Accuracy
-import os
-import sys
-import random
-import time
 from uuid import uuid4
 from torch import autocast
 from scipy.stats import entropy
@@ -55,7 +56,9 @@ def get_dataset(
                             Resize(224),
                             CenterCrop(224),
                             ToTensor(),
-                            Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]), # ImageNet normalization here
+                            # Choose between ImageNet and CLIP normalization, both work well: https://github.com/openai/CLIP/issues/20
+                            # Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]), 
+                            Normalize(mean=(0.48145466, 0.4578275, 0.40821073), std=(0.26862954, 0.26130258, 0.27577711))
                         ]
                     )
     else:
@@ -66,7 +69,7 @@ def get_dataset(
         transforms.append(ToTensor())
 
         if args.normalize_channels:
-            transforms.append(Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]))
+            transforms.append(Normalize(mean=[0.48145466, 0.4578275, 0.40821073], std=[0.26862954, 0.26130258, 0.27577711]))
 
         # transform = Compose(transforms)
         preprocess = Compose(transforms)
@@ -138,16 +141,13 @@ def get_concat_dataset(
 def get_train_data_splits(args):
     """If required split the train data to construct test set from train."""
     training_dataset = get_concat_dataset(is_train=True, args=args)
-    print("here")
     train_len = (
         args.n_train_samples if args.n_train_samples else len(training_dataset)
     ) - args.n_test_samples_from_train
     trash_len = (
         (len(training_dataset) - args.n_train_samples) if args.n_train_samples else 0
     )
-
     torch.manual_seed(torch.initial_seed())
-
     train_split, generated_train, trash = random_split(
         training_dataset, [train_len, args.n_test_samples_from_train, trash_len]
     )
@@ -167,7 +167,7 @@ def get_dataloaders(args):
                             Resize(224),
                             CenterCrop(224),
                             ToTensor(),
-                            Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+                            Normalize(mean=(0.48145466, 0.4578275, 0.40821073), std=(0.26862954, 0.26130258, 0.27577711))
                         ]
                     )
     else:
@@ -178,7 +178,7 @@ def get_dataloaders(args):
         transforms.append(ToTensor())
 
         if args.normalize_channels:
-            transforms.append(Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]))
+            transforms.append(Normalize(mean=[0.48145466, 0.4578275, 0.40821073], std=0.26862954, 0.26130258, 0.27577711]))
 
         # transform = Compose(transforms)
         preprocess = Compose(transforms)
@@ -193,7 +193,6 @@ def get_dataloaders(args):
             args.train[0],
             transform=preprocess,
         )
-    # print(dataset_train)
     # initialise dataloaders
     dataloader = DataLoader(
         dataset_train,
@@ -229,7 +228,7 @@ def get_dataset_real(
                             Resize(224),
                             CenterCrop(224),
                             ToTensor(),
-                            Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+                            Normalize(mean=(0.48145466, 0.4578275, 0.40821073), std=(0.26862954, 0.26130258, 0.27577711))
                         ]
                     )
     else:
@@ -240,7 +239,7 @@ def get_dataset_real(
         transforms.append(ToTensor())
 
         if args.normalize_channels:
-            transforms.append(Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]))
+            transforms.append(Normalize(mean=[0.48145466, 0.4578275, 0.40821073], std=[0.26862954, 0.26130258, 0.27577711]))
 
         # transform = Compose(transforms)
         preprocess = Compose(transforms)
