@@ -1,22 +1,15 @@
 import argparse
+import sys
+import torch
+import clip
+import open_clip
+import os
+import sys
+
 from pytorch_lightning.utilities.types import EVAL_DATALOADERS, TRAIN_DATALOADERS
 from pytorch_lightning.utilities import grad_norm
-import torch
 from pytorch_lightning.callbacks import LearningRateMonitor,ModelCheckpoint
 from pytorch_lightning.strategies import DDPStrategy
-from utils.CustomImageFolder import ImageCaptionFolder
-from utils.StudentArchitectureComponents import ImageEncoder, Projection
-from utils.datahandling_imagenet100 import (
-    get_dataloaders, 
-    get_dataloaders_real,
-    get_train_data_splits_real, 
-    get_train_data_splits,
-    get_concat_dataset
-)
-from utils.datahandling_domainspecific import train_and_test_dataloader, train_dataloader_other, test_dataloader_other, get_test_data
-from utils.datahandling_domainagnostic import (
-    get_wds_loader,
-)
 from torchvision.datasets import ImageFolder
 from torch.utils.data import DataLoader, random_split, ConcatDataset
 from torchvision.transforms import (
@@ -32,17 +25,26 @@ from torchvision.transforms import (
 from torchvision import models
 from torchvision import datasets
 from torch import nn
-import sys
 from torch.nn import functional
 from pytorch_lightning import LightningModule, Trainer
 from pytorch_lightning.loggers import TensorBoardLogger
-import clip
-import open_clip
 from nltk.corpus import wordnet as wn
-import os
-import sys
 from torchmetrics.regression import KLDivergence
+
 from utils.generate_prompts import inference_prompts, get_all_pairs_length,read_captions
+from utils.CustomImageFolder import ImageCaptionFolder
+from utils.StudentArchitectureComponents import ImageEncoder, Projection
+from utils.datahandling_imagenet100 import (
+    get_dataloaders, 
+    get_dataloaders_real,
+    get_train_data_splits_real, 
+    get_train_data_splits,
+    get_concat_dataset
+)
+from utils.datahandling_domainspecific import train_and_test_dataloader, train_dataloader_other, test_dataloader_other, get_test_data
+from utils.datahandling_domainagnostic import (
+    get_wds_loader,
+)
 
 dirname = os.path.dirname(__file__)
 path = os.path.join(dirname, "../../")
@@ -605,8 +607,6 @@ class StudentModel(LightningModule):
         # print(teacher_predictions)log
         accuracy_student = torch.tensor(((torch.max(y_hat.data, 1)[1] == y).sum().item()) / y.size(0))
         accuracy_teacher = torch.tensor(((torch.max(y_hat_teacher.data, 1)[1] == y).sum().item()) / y.size(0))
-        top5_accuracy_student = self.top5acc(y_hat, y)
-        top5_accuracy_teacher = self.top5acc(y_hat_teacher, y)
         # log losses
         if self.distil_alpha<1.0:
             self.log('val_distillation_loss', distill_loss.item(), on_epoch=True, sync_dist=True)
@@ -615,9 +615,7 @@ class StudentModel(LightningModule):
         self.log('val_overall_loss', overall_loss.item(), sync_dist=True)
         self.log('val_accuracy_student', accuracy_student.item(), sync_dist=True)
         self.log('val_accuracy_teacher', accuracy_teacher.item(), sync_dist=True)
-        self.log('val_top5_accuracy_student', top5_accuracy_student, sync_dist=True)
-        self.log('val_top5_accuracy_teacher', top5_accuracy_teacher, sync_dist=True)
-        print("validating")
+        print("validated")
         return y_hat, y
 
 
@@ -746,8 +744,8 @@ class StudentModel(LightningModule):
         y_hat_teacher = (100.0 * image_features_teacher_normalized @ text_features_per_class.T).softmax(dim=-1)
         accuracy_student = torch.tensor(((torch.max(y_hat.data, 1)[1] == y).sum().item()) / y.size(0))
         accuracy_teacher = torch.tensor(((torch.max(y_hat_teacher.data, 1)[1] == y).sum().item()) / y.size(0))
-        top5_accuracy_student = self.top5acc(y_hat, y)
-        top5_accuracy_teacher = self.top5acc(y_hat_teacher, y)
+        # top5_accuracy_student = self.top5acc(y_hat, y)
+        # top5_accuracy_teacher = self.top5acc(y_hat_teacher, y)
         top1_accuracy_student = self.top1acc(y_hat, y)
         top1_accuracy_teacher = self.top1acc(y_hat_teacher, y)
 
@@ -759,8 +757,8 @@ class StudentModel(LightningModule):
         self.log("test_overall_loss", overall_loss, on_epoch=True, on_step=True, sync_dist=True)
         self.log("test_student_accuracy", top1_accuracy_student, on_epoch=True, on_step=True, sync_dist=True)
         self.log("test_teacher_accuracy", top1_accuracy_teacher, on_epoch=True, on_step=True, sync_dist=True)
-        self.log("test_student_accuracy_top5", top5_accuracy_student, on_epoch=True, on_step=True, sync_dist=True)
-        self.log("test_teacher_accuracy_top5", top5_accuracy_teacher, on_epoch=True, on_step=True, sync_dist=True)
+        # self.log("test_student_accuracy_top5", top5_accuracy_student, on_epoch=True, on_step=True, sync_dist=True)
+        # self.log("test_teacher_accuracy_top5", top5_accuracy_teacher, on_epoch=True, on_step=True, sync_dist=True)
         return y_hat, y
 
     
@@ -1070,8 +1068,8 @@ def main(args):
         overall_losses = []
         accuracy_teacher = []
         accuracy_student = []
-        top5_accuracy_teacher = []
-        top5_accuracy_student = []
+        # top5_accuracy_teacher = []
+        # top5_accuracy_student = []
         for checkpoint in args.checkpoints:
             print("Loading model from ", checkpoint)
             checkpoint_loaded = torch.load(checkpoint)
@@ -1083,15 +1081,15 @@ def main(args):
             overall_losses.append(result_dict[0]["test_overall_loss_epoch"])
             accuracy_student.append(result_dict[0]["test_student_accuracy_epoch"])
             accuracy_teacher.append(result_dict[0]["test_teacher_accuracy_epoch"])
-            top5_accuracy_student.append(result_dict[0]["test_student_accuracy_top5_epoch"])
-            top5_accuracy_teacher.append(result_dict[0]["test_teacher_accuracy_top5_epoch"])
+            # top5_accuracy_student.append(result_dict[0]["test_student_accuracy_top5_epoch"])
+            # top5_accuracy_teacher.append(result_dict[0]["test_teacher_accuracy_top5_epoch"])
         print("Distillation losses", distillation_losses)
         print("Training losses", training_losses)
         print("Overall losses", overall_losses)
         print("Accuracy teacher", accuracy_teacher)
         print("Accuracy student", accuracy_student)
-        print("Top5 Accuracy teacher", top5_accuracy_teacher)
-        print("Top5 Accuracy student", top5_accuracy_student)
+        # print("Top5 Accuracy teacher", top5_accuracy_teacher)
+        # print("Top5 Accuracy student", top5_accuracy_student)
             
 
 if __name__ == "__main__":
