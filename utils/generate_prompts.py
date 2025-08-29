@@ -523,8 +523,8 @@ def create_object_llama_repeated(n_repeats,class_name,superclass_name,LLM_local,
 
 def llama_attributes_repeated(dataset,class_ids,LLM_model_id,max_n_tokens,temp,k,p,savedir,n_repeats):
     checkpoint = "meta-llama/Llama-2-7b-chat-hf"
-    tokenizer = AutoTokenizer.from_pretrained(checkpoint,cache_dir="/fs/scratch/rb_bd_dlp_rng-dl01_cr_AIM_employees/pon3an/huggingface_models")
-    LLM = AutoModelForCausalLM.from_pretrained(checkpoint,cache_dir="/fs/scratch/rb_bd_dlp_rng-dl01_cr_AIM_employees/pon3an/huggingface_models", device_map="auto") 
+    tokenizer = AutoTokenizer.from_pretrained(checkpoin)
+    LLM = AutoModelForCausalLM.from_pretrained(checkpoint, device_map="auto") 
     # get precise superclasses from LLM
     superclasses_llama=llama_superclass(dataset,class_ids,LLM_model_id,LLM,tokenizer)
     # overall attribute collections
