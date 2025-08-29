@@ -1,5 +1,5 @@
 """
-    Functions for handling real and synthetic data for OxfordIIITPet, Food101
+    Functions for handling real and synthetic data for OxfordIIITPet, Food101, etc.
 """
 import argparse
 import torch
