@@ -145,10 +145,16 @@ def add_train_args(parser):
         default=0.01,
     )
     parser.add_argument(
-        "--temperature",
+        "--log_temperature",
         type=float,
-        default=1.0,
-        help="Temperature to use in the contrastive (distillation) loss.",
+        default=0.0,
+        help="Log temperature to use in the contrastive (distillation) loss.",
+    )
+    parser.add_argument(
+        "--train_temperature",
+        type=str,
+        help="Set to True to use make the temperature a trainable parameter.",
+        default="False",
     )
     parser.add_argument(
         "--distil_alpha",
@@ -389,7 +395,7 @@ def string_with_spaces(string):
 def contrastive_loss(tokens1, tokens2, log_temperature):
     """loss for contrastive training."""
     # similarity matrix
-    token_similarity = (tokens1 @ tokens2.T) / torch.exp(log_temperature).item()
+    token_similarity = (tokens1 @ tokens2.T) * torch.exp(-log_temperature)
     # columnwise reduction of similarity matrix (i.e. over tokens2)
     dividend=torch.sum(torch.exp(token_similarity),dim=-1)
     # diagonal = similariy between same entries in tokens1 and token2
@@ -451,7 +457,10 @@ class StudentModel(LightningModule):
         # trainable parameter
         self.image_encoder = ImageEncoder(args)
         self.image_token_projector = Projection(args)
-        self.temperature = nn.Parameter(data=torch.zeros(1), requires_grad=True)
+        if eval(args.train_temperature):
+            self.temperature = nn.Parameter(data=args.log_temperature * torch.ones(1), requires_grad=True)
+        else:
+            self.temperature = nn.Parameter(data=args.log_temperature * torch.ones(1), requires_grad=False)
        
     def forward(self, x):
         image_encoded=self.image_encoder(x)
@@ -485,20 +494,20 @@ class StudentModel(LightningModule):
                 text_features_normalized = functional.normalize(text_features, p=2, dim=-1)
                 text_features = text_features_normalized
                 # Compute logits of the teacher 
-                logits_teacher = (text_features @ image_features_teacher.T) / torch.exp(self.temperature).item()
+                logits_teacher = (text_features @ image_features_teacher.T) * torch.exp(-self.temperature)
             else:
                 text_tokenized = self.tokenizer(y).to(device)
                 text_features = self.teacher_model.encode_text(text_tokenized)
                 text_features_normalized = functional.normalize(text_features, p=2, dim=-1)
                 # if (args.normalize_tokens==True):
                 text_features = text_features_normalized
-            logits_teacher = (text_features @ image_features_teacher.T) / torch.exp(self.temperature).item()
+            logits_teacher = (text_features @ image_features_teacher.T) * torch.exp(-self.temperature)
         # Compute image embeddings of the student
         image_features_student = self(x)
         # Normlize student tokens
         image_features_student_normalized = functional.normalize(image_features_student, p=2, dim=-1)
         image_features_student = image_features_student_normalized
-        logits_student = (text_features @ image_features_student.T) / torch.exp(self.temperature).item()
+        logits_student = (text_features @ image_features_student.T) * torch.exp(-self.temperature)
 
 
         # Compute distillation loss
@@ -549,14 +558,14 @@ class StudentModel(LightningModule):
         text_features_normalized = functional.normalize(text_features, p=2, dim=-1)
         image_features_teacher = image_features_teacher_normalized
         text_features = text_features_normalized
-        logits_teacher = (text_features @ image_features_teacher.T) / torch.exp(self.temperature).item()
-        reverse_logits_teacher = (image_features_teacher @ text_features.T) / torch.exp(self.temperature).item()
+        logits_teacher = (text_features @ image_features_teacher.T) * torch.exp(-self.temperature)
+        reverse_logits_teacher = (image_features_teacher @ text_features.T) * torch.exp(self.temperature)
         image_features_student = self(x)
         image_features_student_normalized = functional.normalize(image_features_student, p=2, dim=-1)
         image_features_student = image_features_student_normalized
         #Compute loss as in training
-        logits_student = (text_features @ image_features_student.T) / torch.exp(self.temperature).item()
-        reverse_logits_student = (image_features_student @ text_features.T) / torch.exp(self.temperature).item()
+        logits_student = (text_features @ image_features_student.T) * torch.exp(self.temperature)
+        reverse_logits_student = (image_features_student @ text_features.T) * torch.exp(self.temperature)
         # Compute loss
         if self.distil_alpha>0.0:
             if args.distillation_loss=="L2":
@@ -677,15 +686,15 @@ class StudentModel(LightningModule):
         text_features_normalized /= text_features_normalized.norm(dim=-1, keepdim=True)
         image_features_teacher = image_features_teacher_normalized
         text_features = text_features_normalized
-        logits_teacher = (text_features @ image_features_teacher.T) / torch.exp(self.temperature).item()
-        reverse_logits_teacher = (image_features_teacher @ text_features.T) / torch.exp(self.temperature).item()
+        logits_teacher = (text_features @ image_features_teacher.T) * torch.exp(-self.temperature)
+        reverse_logits_teacher = (image_features_teacher @ text_features.T) * torch.exp(-self.temperature)
         image_features_student = self(x)
         image_features_student_normalized=image_features_student
         image_features_student_normalized /= image_features_student_normalized.norm(dim=-1, keepdim=True)
         image_features_student = image_features_student_normalized
         #Compute loss as in training
-        logits_student = (text_features @ image_features_student.T) / torch.exp(self.temperature).item()
-        reverse_logits_student = (image_features_student @ text_features.T) / torch.exp(self.temperature).item()
+        logits_student = (text_features @ image_features_student.T) * torch.exp(-self.temperature)
+        reverse_logits_student = (image_features_student @ text_features.T) * torch.exp(-self.temperature)
 
         if self.distil_alpha>0.0:
             if args.distillation_loss=="L2":
