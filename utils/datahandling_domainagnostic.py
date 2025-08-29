@@ -1,19 +1,20 @@
 import argparse
 import torch
+import os
+import pytest
+import math
+import webdataset as wds
+import torch.multiprocessing as mp
+
 from torch.utils.data import DataLoader
 from torchvision import models
 from torch import nn
 from torch.nn import functional
 from pytorch_lightning import LightningModule
 from torchmetrics import Accuracy
-import os
 from typing import Callable
-import pytest
-import math
-import webdataset as wds
 from torch.utils.data import DataLoader
 from multiprocessing import Value
-
 from torchvision.transforms import (
     ToTensor,
     Normalize,
@@ -21,7 +22,6 @@ from torchvision.transforms import (
     Compose,
     CenterCrop,
 )
-import torch.multiprocessing as mp
 from torchvision.transforms import (
     Compose,
     RandomResizedCrop,
@@ -45,8 +45,7 @@ def get_transform() -> Compose:
             RandomResizedCrop(224),
             RandomHorizontalFlip(),
             ToTensor(),
-            # Choose between ImageNet and CLIP normalization, for the experiments in the paper we used ImageNet
-            # but did not see any significant change compare to the commonly used CLIP normalization
+            # Choose between ImageNet and CLIP normalization, both work well: https://github.com/openai/CLIP/issues/20
             # Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
             Normalize(mean=(0.48145466, 0.4578275, 0.40821073), std=(0.26862954, 0.26130258, 0.27577711))
         ]
