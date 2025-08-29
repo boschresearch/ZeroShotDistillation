@@ -2,8 +2,13 @@
     Functions for handling real and synthetic data for OxfordIIITPet, Food101
 """
 import argparse
-from pytorch_lightning.utilities.types import EVAL_DATALOADERS, TRAIN_DATALOADERS
 import torch
+import torch.multiprocessing as mp
+import numpy as np
+import scipy
+import os
+
+from pytorch_lightning.utilities.types import EVAL_DATALOADERS, TRAIN_DATALOADERS
 from utils.CustomImageFolder import ImageCaptionFolder
 from torchvision.datasets import ImageFolder, ImageNet
 from torch.utils.data import DataLoader, random_split, ConcatDataset
@@ -19,10 +24,7 @@ from torchvision.transforms import (
 from torchvision import datasets
 from torch import nn
 from torch.nn import functional
-import torch.multiprocessing as mp
-import numpy as np
-import scipy
-import os
+
 
 def train_and_test_dataloader(args):
     print("getting data from utils")
