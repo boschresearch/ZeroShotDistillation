@@ -154,8 +154,8 @@ def train_and_test_dataloader(args):
 def test_dataloader_other(args):
     ImageNet_transform = Compose(
         [
-            RandomResizedCrop(224),
-            RandomHorizontalFlip(),
+            Resize(256),
+            CenterCrop(224),
             ToTensor(),
             Normalize(mean=(0.48145466, 0.4578275, 0.40821073), std=(0.26862954, 0.26130258, 0.27577711))
         ]
@@ -293,8 +293,8 @@ def train_dataloader_other(args):
 def get_test_data(args):
     ImageNet_transform = Compose(
         [
-            RandomResizedCrop(224),
-            RandomHorizontalFlip(),
+            Resize(256),
+            CenterCrop(224),
             ToTensor(),
             Normalize(mean=(0.48145466, 0.4578275, 0.40821073), std=(0.26862954, 0.26130258, 0.27577711))
         ]
