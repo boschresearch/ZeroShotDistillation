@@ -64,15 +64,15 @@ def get_dataset(
     else:
         print("Using augmentations")
         transforms = []
-        transforms.append(Resize(256))
-        transforms.append(CenterCrop(224))
+        transforms.append(RandomResizedCrop(224))
+        transforms.append(RandomHorizontalFlip())
         transforms.append(ToTensor())
 
-        if args.normalize_channels:
-            transforms.append(Normalize(mean=[0.48145466, 0.4578275, 0.40821073], std=[0.26862954, 0.26130258, 0.27577711]))
+    if args.normalize_channels:
+        transforms.append(Normalize(mean=[0.48145466, 0.4578275, 0.40821073], std=[0.26862954, 0.26130258, 0.27577711]))
 
-        # transform = Compose(transforms)
-        preprocess = Compose(transforms)
+    # transform = Compose(transforms)
+    preprocess = Compose(transforms)
 
     if is_train:
         if eval(args.precompute_teacher):
@@ -164,7 +164,7 @@ def get_dataloaders(args):
         print("Using no augmentations")
         preprocess = Compose(
                         [
-                            Resize(224),
+                            Resize(256),
                             CenterCrop(224),
                             ToTensor(),
                             Normalize(mean=(0.48145466, 0.4578275, 0.40821073), std=(0.26862954, 0.26130258, 0.27577711))
@@ -173,8 +173,8 @@ def get_dataloaders(args):
     else:
         print("Using augmentations")
         transforms = []
-        transforms.append(Resize(256))
-        transforms.append(CenterCrop(224))
+        transforms.append(RandomResizedCrop(224))
+        transforms.append(RandomHorizontalFlip())
         transforms.append(ToTensor())
 
         if args.normalize_channels:
