@@ -1,9 +1,8 @@
 import os
 import os.path
+
 from typing import Any, Callable, cast, Dict, List, Optional, Tuple, Union
-
 from PIL import Image
-
 from torchvision.datasets import VisionDataset
 
 
