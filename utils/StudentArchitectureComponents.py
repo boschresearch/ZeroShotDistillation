@@ -9,6 +9,7 @@ import random
 import time
 import clip
 import numpy as np
+import torch.multiprocessing as mp
 
 from torchvision import models
 from torch import nn
@@ -16,7 +17,6 @@ from torch.nn import functional
 from pytorch_lightning import LightningModule, Trainer
 from pytorch_lightning.loggers import TensorBoardLogger
 from pytorch_lightning.callbacks import TQDMProgressBar
-import torch.multiprocessing as mp
 from numpy.linalg import norm
 from torchmetrics import Accuracy
 from nltk.corpus import wordnet as wn
