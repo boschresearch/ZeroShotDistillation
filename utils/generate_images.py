@@ -2,12 +2,12 @@
     Functions for generating images with and without CLIP filtering.
 """
 import torch
-
-from utils.generate_prompts import get_dedicated_class_names
 import numpy as np
 import clip
-from diffusers import AutoPipelineForText2Image, LCMScheduler, DiffusionPipeline
 import os
+
+from utils.generate_prompts import get_dedicated_class_names
+from diffusers import AutoPipelineForText2Image, LCMScheduler, DiffusionPipeline
 from compel import Compel, ReturnedEmbeddingsType
 from accelerate import PartialState
 
