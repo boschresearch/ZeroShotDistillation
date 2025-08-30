@@ -2,6 +2,14 @@
     Classes for the student architecture components.
 """
 import torch
+import timm
+import os
+import sys
+import random
+import time
+import clip
+import numpy as np
+
 from torchvision import models
 from torch import nn
 from torch.nn import functional
@@ -9,16 +17,9 @@ from pytorch_lightning import LightningModule, Trainer
 from pytorch_lightning.loggers import TensorBoardLogger
 from pytorch_lightning.callbacks import TQDMProgressBar
 import torch.multiprocessing as mp
-import numpy as np
 from numpy.linalg import norm
 from torchmetrics import Accuracy
-import clip
 from nltk.corpus import wordnet as wn
-import timm
-import os
-import sys
-import random
-import time
 from uuid import uuid4
 from torch import autocast
 
