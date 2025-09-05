@@ -262,7 +262,7 @@ def add_train_args(parser):
     parser.add_argument(
         "--weight_decay",
         type=float,
-        default=0.2,
+        default=0.0-,
         help="Weight decay",
     )
     parser.add_argument(
@@ -501,7 +501,6 @@ class StudentModel(LightningModule):
                 text_tokenized = self.tokenizer(y).to(device)
                 text_features = self.teacher_model.encode_text(text_tokenized)
                 text_features_normalized = functional.normalize(text_features, p=2, dim=-1)
-                # if (args.normalize_tokens==True):
                 text_features = text_features_normalized
             logits_teacher = (text_features @ image_features_teacher.T) * torch.exp(-self.temperature)
         # Compute image embeddings of the student
@@ -517,7 +516,7 @@ class StudentModel(LightningModule):
             if args.distillation_loss=="L2":
                 difference_to_teacher = image_features_student-image_features_teacher
                 L2_distance_to_teacher = torch.norm(difference_to_teacher, dim=-1)
-                distill_loss = sum(L2_distance_to_teacher)/len(L2_distance_to_teacher)
+                distill_loss = sum(L2_distance_to_teacher)/len(L2_distance_to_teacher) # len(L2_distance_to_teacher) is actually constant and could be ignored
                 
             elif args.distillation_loss=="I2I":
                 # Distillation loss from https://arxiv.org/pdf/1503.02531.pdf 
@@ -717,8 +716,8 @@ class StudentModel(LightningModule):
         else:
             overall_loss = ((self.distil_alpha) * distill_loss) + ((1- self.distil_alpha) * contrastive_loss_batch)
         # normalize tokens if not done before
-        image_features_student_normalized = functional.normalize(image_features_student, p=2, dim=-1)
-        image_features_teacher_normalized = functional.normalize(image_features_teacher, p=2, dim=-1)
+        # image_features_student_normalized = functional.normalize(image_features_student, p=2, dim=-1)
+        # image_features_teacher_normalized = functional.normalize(image_features_teacher, p=2, dim=-1)
         # Compute predictions
         if args.dataset=="pets":
             photo_prompts_per_class = [inference_prompts(args.dataset,class_num) for class_num in complete_class_ids]
@@ -740,8 +739,8 @@ class StudentModel(LightningModule):
             photo_prompts_per_class_tokenized = self.tokenizer(photo_prompts_per_class).to(device)
         text_features_per_class = self.teacher_model.encode_text(photo_prompts_per_class_tokenized)
         text_features_per_class /= text_features_per_class.norm(dim=-1, keepdim=True)
-        y_hat = (100.0 * image_features_student_normalized @ text_features_per_class.T).softmax(dim=-1)
-        y_hat_teacher = (100.0 * image_features_teacher_normalized @ text_features_per_class.T).softmax(dim=-1)
+        y_hat = (100.0 * image_features_student @ text_features_per_class.T).softmax(dim=-1)
+        y_hat_teacher = (100.0 * image_features_teacher @ text_features_per_class.T).softmax(dim=-1)
         accuracy_student = torch.tensor(((torch.max(y_hat.data, 1)[1] == y).sum().item()) / y.size(0))
         accuracy_teacher = torch.tensor(((torch.max(y_hat_teacher.data, 1)[1] == y).sum().item()) / y.size(0))
         # top5_accuracy_student = self.top5acc(y_hat, y)
