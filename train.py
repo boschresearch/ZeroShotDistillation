@@ -561,13 +561,13 @@ class StudentModel(LightningModule):
         image_features_teacher = image_features_teacher_normalized
         text_features = text_features_normalized
         logits_teacher = (text_features @ image_features_teacher.T) * torch.exp(-self.temperature)
-        reverse_logits_teacher = (image_features_teacher @ text_features.T) * torch.exp(self.temperature)
+        reverse_logits_teacher = (image_features_teacher @ text_features.T) * torch.exp(-self.temperature)
         image_features_student = self(x)
         image_features_student_normalized = functional.normalize(image_features_student, p=2, dim=-1)
         image_features_student = image_features_student_normalized
         #Compute loss as in training
-        logits_student = (text_features @ image_features_student.T) * torch.exp(self.temperature)
-        reverse_logits_student = (image_features_student @ text_features.T) * torch.exp(self.temperature)
+        logits_student = (text_features @ image_features_student.T) * torch.exp(-self.temperature)
+        reverse_logits_student = (image_features_student @ text_features.T) * torch.exp(-self.temperature)
         # Compute loss
         if self.distil_alpha>0.0:
             if args.distillation_loss=="L2":
