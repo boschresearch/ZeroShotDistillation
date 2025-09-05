@@ -1,7 +1,7 @@
 import argparse
 import sys
 import torch
-import clip
+# import clip # removed openai CLIP models since they are integrated into open_clip
 import open_clip
 import os
 import sys
@@ -126,7 +126,7 @@ def add_train_args(parser):
         "--teacher",
         type=str,
         default="ViT-B/32",
-        help="Architecture of the teacher model, options are 'RN101' or 'ViT-B/32'",
+        help="Architecture of the teacher model, select from open_clip",
     )
     parser.add_argument(
         "--epochs",
@@ -595,10 +595,7 @@ class StudentModel(LightningModule):
         image_features_teacher_normalized = functional.normalize(image_features_teacher, p=2, dim=-1)
         # Compute predictions if not done befor for CE loss
         photo_prompts_per_class = [inference_prompts(args.dataset,class_num) for class_num in image_class_ids]
-        if args.teacher!="ViT-B/32-DataCompXL" and args.teacher!="RN101_openclip" and args.teacher!=args.teacher=="ViT-B/16-LAION2B":  
-            photo_prompts_per_class_tokenized = clip.tokenize(photo_prompts_per_class).to(device)
-        else:
-            photo_prompts_per_class_tokenized = self.tokenizer(photo_prompts_per_class).to(device)
+        photo_prompts_per_class_tokenized = self.tokenizer(photo_prompts_per_class).to(device)
         text_features_per_class = self.teacher_model.encode_text(photo_prompts_per_class_tokenized)
         text_features_per_class_normalized = functional.normalize(text_features_per_class, p=2, dim=-1)
         y_hat = (100.0 * image_features_student_normalized @ text_features_per_class_normalized.T).softmax(dim=-1)
@@ -670,11 +667,7 @@ class StudentModel(LightningModule):
             complete_class_ids = range(1000)
             photo_prompts = [inference_prompts(args.dataset,class_num.item()) for class_num in y]
         device = "cuda" if torch.cuda.is_available() else "cpu"
-        if args.teacher!="ViT-B/32-DataCompXL" and args.teacher!="RN101_openclip" and args.teacher!=args.teacher=="ViT-B/16-LAION2B":
-            print("Using CLIP tokenizer")
-            photo_prompts_tokenized = clip.tokenize(photo_prompts).to(device)
-        else:
-            photo_prompts_tokenized = self.tokenizer(photo_prompts).to(device)
+        photo_prompts_tokenized = self.tokenizer(photo_prompts).to(device)
         text_features = self.teacher_model.encode_text(photo_prompts_tokenized)
         image_features_teacher = self.teacher_model.encode_image(x)
         image_features_teacher_normalized=image_features_teacher
@@ -733,10 +726,7 @@ class StudentModel(LightningModule):
             photo_prompts_per_class = [inference_prompts(args.dataset,class_num) for class_num in complete_class_ids]
         elif args.dataset=="imagenet":
             photo_prompts_per_class = [inference_prompts(args.dataset,class_num) for class_num in complete_class_ids]
-        if args.teacher!="ViT-B/32-DataCompXL" and args.teacher!="RN101_openclip" and args.teacher!=args.teacher=="ViT-B/16-LAION2B":  
-            photo_prompts_per_class_tokenized = clip.tokenize(photo_prompts_per_class).to(device)
-        else:
-            photo_prompts_per_class_tokenized = self.tokenizer(photo_prompts_per_class).to(device)
+        photo_prompts_per_class_tokenized = self.tokenizer(photo_prompts_per_class).to(device)
         text_features_per_class = self.teacher_model.encode_text(photo_prompts_per_class_tokenized)
         text_features_per_class /= text_features_per_class.norm(dim=-1, keepdim=True)
         y_hat = (100.0 * image_features_student @ text_features_per_class.T).softmax(dim=-1)
