@@ -9,6 +9,7 @@ def parse_args(parser):
     return post_parse(args)
 
 def add_train_args(parser):
+# args are not fully cleaned (yet)
 # Parameters for synthetic image generation
     parser.add_argument(
         "--dataset",
@@ -62,12 +63,6 @@ def add_train_args(parser):
         type=str,
         help="Path to the directory to save dataset to",
         #required=True,
-    )
-    parser.add_argument(
-        "--batch_size_TtI;",
-        type=int,
-        default=1,
-        help="Number of images generated in parallel per text-to-image model instance.",
     )
     parser.add_argument(
         "--guidance_scale",
