@@ -449,7 +449,7 @@ class StudentModel(LightningModule):
             # load teacher
             self.teacher_name=args.teacher
             teacher_model, _, self.preprocess = open_clip.create_model_and_transforms(args.teacher, pretrained=args.teacher_pretrained)
-            self.tokenizer = open_clip.get_tokenizer('ViT-B-32')
+            self.tokenizer = open_clip.get_tokenizer(args.teacher)
             self.teacher_model = teacher_model
         # Setting teacher parameters as fixed/non-trainable
         for param in self.teacher_model.parameters():
