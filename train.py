@@ -125,7 +125,7 @@ def add_train_args(parser):
     parser.add_argument(
         "--teacher",
         type=str,
-        default="ViT-B/32",
+        default="ViT-B-32",
         help="Architecture of the teacher model, select from open_clip",
     )
     parser.add_argument(
