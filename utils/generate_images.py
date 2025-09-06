@@ -3,7 +3,8 @@
 """
 import torch
 import numpy as np
-import clip
+# import clip
+import open_clip # switched to open_clip as the openai models are included there
 import os
 
 from utils.generate_prompts import get_dedicated_class_names
@@ -110,14 +111,10 @@ def generate_images_accelerate(args):
      # add CLIP filter
     if eval(args.CLIP_filter):
         print("filter images by teacher")
-        if args.teacher=="RN101":
-            model, preprocess = clip.load("RN101", device=state.device)
-        if args.teacher=="ViT-L/14":
-            model, preprocess = clip.load("ViT-L/14", device=state.device)
-        else:
-            model, preprocess = clip.load("ViT-B/32", device=state.device)
+        model, _, preprocess = open_clip.create_model_and_transforms(args.teacher, pretrained=args.teacher_pretrained)
+        tokenizer = open_clip.get_tokenizer(args.teacher)
         class_names=get_dedicated_class_names(args.dataset,args.train_class_ids[0])
-        text_inputs = torch.cat([clip.tokenize(f"a photo of a {c}") for c in class_names]).to(rank)
+        text_inputs = torch.cat([tokenizer(f"a photo of a {c}") for c in class_names]).to(rank)
 
         with torch.no_grad():
             text_features = model.encode_text(text_inputs)
@@ -158,7 +155,6 @@ def generate_images_accelerate(args):
                     )
                     image.save(image_path)
                     index2=index2+1
-                    CLIP_filter=False
                 else:
                     print("Image filtered")
                     print("CLIP predicted class: ",indices[0])
