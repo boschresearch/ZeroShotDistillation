@@ -115,11 +115,17 @@ def add_train_args(parser):
         default=4,
         help="Number of workers that the dataloader uses. ",
     )
+    parser.add_argument(
+        "--n_test_samples_from_train",
+        type=int,
+        default=0,
+        help="Number of samples to take from the train set as an optional set for imagenet - optional and not used.",
+    )
 # Important training and model hyperparameters
     parser.add_argument(
         "--model",
         type=str,
-        default="mobilenet_v2",
+        default="tiny_vit_11m_224",
         help="Architecture of the student model, e.g. 'resnet18' or 'mobilenet_v2'. 'cct' to use a compact convolutional transformer.",
     )
     parser.add_argument(
