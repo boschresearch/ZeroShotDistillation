@@ -1037,7 +1037,6 @@ def main(args):
                 )
             if args.dataset=="pets":
                 test_data = datasets.OxfordIIITPet(root=args.test[0],split="test",transform=test_transform)
-                train_data = datasets.OxfordIIITPet(root=args.test[0],split="trainval",transform=test_transform)
             elif args.dataset=="flowers":
                 test_data = datasets.Flowers102(root=args.test[0],split="test",transform=test_transform)
             elif args.dataset=="texture":
@@ -1045,13 +1044,14 @@ def main(args):
             elif args.dataset=="aircraft":
                 test_path = os.path.join(args.test[0],"test")
                 test_data = datasets.ImageFolder(root=test_path,transform=test_transform)
-                train_path = os.path.join(args.test[0],"train")
             elif args.dataset=="cars":
                 test_data = datasets.StanfordCars(root=args.test[0],split="test",transform=test_transform)
             elif args.dataset=="food":
                 test_data = datasets.Food101(root=args.test[0],split="test",transform=test_transform)
         if args.dataset!="imagenet":
             test_dataloader=DataLoader(test_data, batch_size=args.batch_size, num_workers=args.num_workers, shuffle=False,drop_last=False)
+        else:
+            raise NotImplementedError
         distillation_losses = []
         training_losses = []
         overall_losses = []
