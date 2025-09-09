@@ -1048,10 +1048,8 @@ def main(args):
                 test_data = datasets.StanfordCars(root=args.test[0],split="test",transform=test_transform)
             elif args.dataset=="food":
                 test_data = datasets.Food101(root=args.test[0],split="test",transform=test_transform)
-        if args.dataset!="imagenet":
+        if args.dataset!="imagenet": # for imagenet we already get a dataloader
             test_dataloader=DataLoader(test_data, batch_size=args.batch_size, num_workers=args.num_workers, shuffle=False,drop_last=False)
-        else:
-            raise NotImplementedError
         distillation_losses = []
         training_losses = []
         overall_losses = []
