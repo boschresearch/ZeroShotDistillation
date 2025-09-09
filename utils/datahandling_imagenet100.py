@@ -75,18 +75,11 @@ def get_dataset(
     preprocess = Compose(transforms)
 
     if is_train:
-        if eval(args.precompute_teacher):
-            dataset = ImageCaptionFolderPrecomputed(
-                path,
-                transform=preprocess,
-                target_transform=index_transform,
-            ) 
-        else:
-            dataset = ImageCaptionFolder(
-                path,
-                transform=preprocess,
-                target_transform=index_transform,
-            )
+        dataset = ImageCaptionFolder(
+            path,
+            transform=preprocess,
+            target_transform=index_transform,
+        )
     else:
         dataset = ImageFolder(
             path,
@@ -182,17 +175,10 @@ def get_dataloaders(args):
 
         # transform = Compose(transforms)
         preprocess = Compose(transforms)
-    
-    if eval(args.precompute_teacher):
-        dataset_train = ImageCaptionFolderPrecomputed(
-            args.train[0],
-            transform=preprocess,
-        )
-    else:
-        dataset_train = ImageCaptionFolder(
-            args.train[0],
-            transform=preprocess,
-        )
+    dataset_train = ImageCaptionFolder(
+        args.train[0],
+        transform=preprocess,
+    )
     # initialise dataloaders
     dataloader = DataLoader(
         dataset_train,
