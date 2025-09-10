@@ -789,14 +789,7 @@ class StudentModel(LightningModule):
         ]
 
     def configure_optimizers(self):
-        if self.optimizer == "SGD":
-            optimizer = torch.optim.SGD(
-                self.get_parameter_groups_for_sgd(),
-                lr=self.learning_rate,
-                momentum=self.momentum,
-                weight_decay=self.weight_decay,
-            )
-        elif self.optimizer == "AdamW":
+        if self.optimizer == "AdamW":
             if self.teacher_name == "RN101":
                 optimizer = getattr(torch.optim, self.optimizer)(
                     self.get_parameter_groups_for_adamW(), lr=self.learning_rate, betas=(0.9, 0.999), eps=1e-08, weight_decay=self.weight_decay
