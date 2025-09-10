@@ -42,9 +42,7 @@ from utils.datahandling_imagenet100 import (
     get_concat_dataset
 )
 from utils.datahandling_domainspecific import train_and_test_dataloader, train_dataloader_other, test_dataloader_other, get_test_data
-from utils.datahandling_domainagnostic import (
-    get_wds_loader,
-)
+from utils.datahandling_domainagnostic import get_wds_loader
 
 dirname = os.path.dirname(__file__)
 path = os.path.join(dirname, "../../")
