@@ -174,7 +174,7 @@ def add_train_args(parser):
         "--contrastive_lambda",
         type=float_in_range(0.0, 1.0),
         default=0.5,
-        help="Lmabda used to balance the text-to-image and image-to-text loss. ",
+        help="Lambda used to balance the text-to-image and image-to-text loss. ",
     )
     parser.add_argument(
         "--save_model_path",
@@ -270,12 +270,6 @@ def add_train_args(parser):
         type=float,
         default=0.0,
         help="Weight decay",
-    )
-    parser.add_argument(
-        "--batchnorm_train",
-        action="store_true",
-        default=False,
-        help="Set this flag to set the batch norm layers to train mode during the last evaluation epoch.",
     )
 # logging
     parser.add_argument(
@@ -426,11 +420,9 @@ class StudentModel(LightningModule):
             # data related attributes
             if args.dataset!="datacomp":
                 self.num_train_classes = args.num_train_classes
+            self.top1acc = Accuracy(task="multiclass", num_classes=args.num_train_classes, top_k=1)
             self.synthetic_data = args.synthetic_data
             self.train_dir = args.train
-            # losses
-            if args.training_loss=="KL":
-                self.kl_divergence=KLDivergence()
             # model related hyperparameters and architectural parameters
             self.distil_alpha = args.distil_alpha
             self.contrastive_loss_lambda = args.contrastive_lambda
@@ -439,7 +431,6 @@ class StudentModel(LightningModule):
             self.optimizer = args.optimizer
             self.momentum = args.momentum
             self.weight_decay = args.weight_decay
-            self.distil_alpha = args.distil_alpha
             # self.lr_scheduling = args.lr_scheduling
             self.warmup = args.warmup
             self.epochs = args.epochs
@@ -535,7 +526,6 @@ class StudentModel(LightningModule):
             contrastive_loss_batch_1 = contrastive_loss(image_features_student, text_features, self.temperature)
             contrastive_loss_batch_2 = contrastive_loss(text_features, image_features_student, self.temperature)
             contrastive_loss_batch = 1/2*(contrastive_loss_batch_1+contrastive_loss_batch_2)
-            print(contrastive_loss_batch)
         
         if self.distil_alpha==1.0:
             overall_loss = distill_loss
@@ -549,10 +539,6 @@ class StudentModel(LightningModule):
     def validation_step(self, batch, batch_idx):
         self.teacher_model.eval()
         self.eval()
-        if args.batchnorm_train:
-            for layer in self.model.modules():
-                if isinstance(layer, nn.BatchNorm2d):
-                    layer.train()
         x, y = batch
         # Compute tokens as for training
         image_class_ids = [id for sublist in args.val_class_ids for id in sublist]
@@ -610,10 +596,10 @@ class StudentModel(LightningModule):
         accuracy_student = torch.tensor(((torch.max(y_hat.data, 1)[1] == y).sum().item()) / y.size(0))
         accuracy_teacher = torch.tensor(((torch.max(y_hat_teacher.data, 1)[1] == y).sum().item()) / y.size(0))
         # log losses
-        if self.distil_alpha<1.0:
-            self.log('val_distillation_loss', distill_loss.item(), on_epoch=True, sync_dist=True)
         if self.distil_alpha>0.0:
-            self.log('val_training_loss', contrastive_loss.item(), sync_dist=True)
+            self.log('val_distillation_loss', distill_loss.item(), on_epoch=True, sync_dist=True)
+        if self.distil_alpha<1.0:
+            self.log('val_training_loss', contrastive_loss_batch.item(), sync_dist=True)
         self.log('val_overall_loss', overall_loss.item(), sync_dist=True)
         self.log('val_accuracy_student', accuracy_student.item(), sync_dist=True)
         self.log('val_accuracy_teacher', accuracy_teacher.item(), sync_dist=True)
@@ -645,10 +631,6 @@ class StudentModel(LightningModule):
     def test_step(self, batch, batch_idx):
         self.teacher_model.eval()
         self.eval()
-        if args.batchnorm_train:
-            for layer in self.model.modules():
-                if isinstance(layer, nn.BatchNorm2d):
-                    layer.train()
         x, y = batch
         # Compute tokens as for training
         if args.dataset=="pets":
@@ -745,9 +727,9 @@ class StudentModel(LightningModule):
         top1_accuracy_teacher = self.top1acc(y_hat_teacher, y)
 
         # log losses and accuracy
-        if self.distil_alpha>0.0:
-            self.log("test_training_loss", contrastive_loss, on_epoch=True, on_step=True, sync_dist=True)
         if self.distil_alpha<1.0:
+            self.log("test_training_loss", contrastive_loss_batch, on_epoch=True, on_step=True, sync_dist=True)
+        if self.distil_alpha>0.0:
             self.log("test_distillation_loss", distill_loss, on_epoch=True, on_step=True, sync_dist=True)
         self.log("test_overall_loss", overall_loss, on_epoch=True, on_step=True, sync_dist=True)
         self.log("test_student_accuracy", top1_accuracy_student, on_epoch=True, on_step=True, sync_dist=True)
