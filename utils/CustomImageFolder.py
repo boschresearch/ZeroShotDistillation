@@ -5,7 +5,6 @@ from typing import Any, Callable, cast, Dict, List, Optional, Tuple, Union
 from PIL import Image
 from torchvision.datasets import VisionDataset
 
-
 def has_file_allowed_extension(filename: str, extensions: Union[str, Tuple[str, ...]]) -> bool:
     """Checks if a file is an allowed extension.
 
