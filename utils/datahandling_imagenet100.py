@@ -11,7 +11,6 @@ import time
 import torch.multiprocessing as mp
 import numpy as np
 
-from utils.CustomImageFolder import ImageCaptionFolder
 from torchvision.datasets import ImageFolder
 from torch.utils.data import DataLoader, random_split, ConcatDataset
 from torchvision.transforms import (
@@ -33,6 +32,8 @@ from torchmetrics import Accuracy
 from uuid import uuid4
 from torch import autocast
 from scipy.stats import entropy
+
+from utils.CustomImageFolder import ImageCaptionFolder
 
 # get dataset for synthetic data
 def get_dataset(
