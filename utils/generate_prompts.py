@@ -2,13 +2,15 @@
     Functions for generating prompts for inference and image generation.
 """
 import torch
-from transformers import AutoModelForCausalLM, AutoTokenizer
-import os
-from tqdm import tqdm
 import random
+import os
+
+from transformers import AutoModelForCausalLM, AutoTokenizer
+from tqdm import tqdm
+from nltk.corpus import wordnet as wn
 from allpairspy import AllPairs
 from math import ceil
-from utils.labels import TEXTURES_LABELS,IMAGENET_LABELS,IMAGENET_DIR_NAMES,REVERSE_IMAGENET_LABELS,imagenet_templates,PET_LABELS,FOOD_LABELS,CAR_LABELS,FLOWER_LABELS,AIRCRAFT_LABELS,EUROSAT_LABELS,TEXTURES_LABELS,REVERSE_IMAGENET_DIR_NAMES
+from utils.labels import IMAGENET_LABELS,IMAGENET_DIR_NAMES,REVERSE_IMAGENET_LABELS,imagenet_templates,PET_LABELS,FOOD_LABELS,CAR_LABELS,FLOWER_LABELS,AIRCRAFT_LABELS,EUROSAT_LABELS,TEXTURES_LABELS,REVERSE_IMAGENET_DIR_NAMES
 """
     Utilities for ImageNet
 """
@@ -720,11 +722,11 @@ def get_dedicated_class_names(dataset,class_ids):
     elif dataset=="flowers":
         IN_prompts=[simple_prompt_flowers(index) for index in class_ids]
     elif dataset=="texture":
-        IN_prompts=[simple_prompt_flowers(index) for index in class_ids]
+        IN_prompts=[simple_prompt_texture(index) for index in class_ids]
     elif dataset=="cars":
         IN_prompts=[simple_prompt_cars(index) for index in class_ids]
     elif dataset=="aircraft":
-        IN_prompts=[simple_prompt_cars(index) for index in class_ids]
+        IN_prompts=[simple_prompt_aircraft(index) for index in class_ids]
     elif dataset=="food":
         IN_prompts=[simple_prompt_food(index) for index in class_ids]
     return IN_prompts
