@@ -10,7 +10,21 @@ from tqdm import tqdm
 from nltk.corpus import wordnet as wn
 from allpairspy import AllPairs
 from math import ceil
-from utils.labels import IMAGENET_LABELS,IMAGENET_DIR_NAMES,REVERSE_IMAGENET_LABELS,imagenet_templates,PET_LABELS,FOOD_LABELS,CAR_LABELS,FLOWER_LABELS,AIRCRAFT_LABELS,EUROSAT_LABELS,TEXTURES_LABELS,REVERSE_IMAGENET_DIR_NAMES
+from utils.labels import (
+    IMAGENET_LABELS,
+    IMAGENET_DIR_NAMES,
+    REVERSE_IMAGENET_LABELS,
+    imagenet_templates,
+    PET_LABELS,
+    FOOD_LABELS,
+    CAR_LABELS,
+    FLOWER_LABELS,
+    AIRCRAFT_LABELS,
+    EUROSAT_LABELS,
+    TEXTURES_LABELS,
+    REVERSE_IMAGENET_DIR_NAMES
+)
+
 """
     Utilities for ImageNet
 """
