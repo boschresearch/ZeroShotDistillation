@@ -12,7 +12,7 @@ from diffusers import AutoPipelineForText2Image, LCMScheduler, DiffusionPipeline
 from compel import Compel, ReturnedEmbeddingsType
 from accelerate import PartialState
 
-# # SDXL lora
+# SDXL lora
 Image_model_id = "stabilityai/stable-diffusion-xl-base-1.0"
 Image_adapter_id = "latent-consistency/lcm-lora-sdxl"
 Image_pipe = AutoPipelineForText2Image.from_pretrained(Image_model_id, torch_dtype=torch.float16, variant="fp16", use_safetensors=True)
