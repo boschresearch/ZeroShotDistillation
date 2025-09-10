@@ -1,7 +1,8 @@
 import argparse
+import random
+
 from utils.generate_prompts import inference_prompts, generate_prompts_all_pairs_repeated,generate_simple_prompts
 from utils.generate_images import generate_images, generate_images_accelerate
-import random
 
 def parse_args(parser):
     parser = add_train_args(parser)
