@@ -30,6 +30,8 @@ from pytorch_lightning import LightningModule, Trainer
 from pytorch_lightning.loggers import TensorBoardLogger
 from nltk.corpus import wordnet as wn
 from torchmetrics.regression import KLDivergence
+from torchmetrics import Accuracy
+from torchmetrics.classification import MulticlassAccuracy
 
 from utils.generate_prompts import inference_prompts, get_all_pairs_length,read_captions
 from utils.CustomImageFolder import ImageCaptionFolder
@@ -511,8 +513,7 @@ class StudentModel(LightningModule):
             if args.distillation_loss=="L2":
                 difference_to_teacher = image_features_student-image_features_teacher
                 L2_distance_to_teacher = torch.norm(difference_to_teacher, dim=-1)
-                distill_loss = sum(L2_distance_to_teacher)/len(L2_distance_to_teacher) # len(L2_distance_to_teacher) is actually constant and could be ignored
-                
+                distill_loss = sum(L2_distance_to_teacher)/len(L2_distance_to_teacher) 
             elif args.distillation_loss=="I2I":
                 # Distillation loss from https://arxiv.org/pdf/1503.02531.pdf 
                 I2I_loss = contrastive_loss(image_features_student,image_features_teacher,self.temperature)
@@ -562,7 +563,7 @@ class StudentModel(LightningModule):
             if args.distillation_loss=="L2":
                 difference_to_teacher = image_features_student-image_features_teacher
                 L2_distance_to_teacher = torch.norm(difference_to_teacher, dim=-1)
-                distill_loss = sum(L2_distance_to_teacher)/len(L2_distance_to_teacher)
+                distill_loss = sum(L2_distance_to_teacher)/len(L2_distance_to_teacher) # take mean per batch
             elif args.distillation_loss=="I2I":
                 # Distillation loss from https://arxiv.org/pdf/1503.02531.pdf 
                 I2I_loss = contrastive_loss(image_features_student,image_features_teacher,self.temperature)
