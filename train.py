@@ -36,15 +36,9 @@ from torchmetrics.classification import MulticlassAccuracy
 from utils.generate_prompts import inference_prompts, get_all_pairs_length,read_captions
 from utils.CustomImageFolder import ImageCaptionFolder
 from utils.StudentArchitectureComponents import ImageEncoder, Projection
-from utils.datahandling_imagenet100 import (
-    get_dataloaders, 
-    get_dataloaders_real,
-    get_train_data_splits_real, 
-    get_train_data_splits,
-    get_concat_dataset
-)
 from utils.datahandling_domainspecific import train_and_test_dataloader, train_dataloader_other, test_dataloader_other, get_test_data
 from utils.datahandling_domainagnostic import get_wds_loader
+from utils.argparsing import add_train_args
 
 dirname = os.path.dirname(__file__)
 path = os.path.join(dirname, "../../")
@@ -57,287 +51,11 @@ def parse_args(parser):
     args = parser.parse_args()
     return post_parse(args)
 
-def add_train_args(parser):
-# Parameters for the dataset
-    parser.add_argument(
-        "--dataset",
-        type=str,
-        default="imagenet",
-        help="Select dataset from: imagenet, pets, cars, food, flowers, aircraft, texture",
-    )
-    parser.add_argument(
-        "--synthetic_data",
-        type=str,
-        default="False",
-        help="Choose whether to use synthetic data or not",
-    )
-    parser.add_argument(
-        "--train",
-        type=str,
-        help="The directory where the training data set is stored",
-        action="append",
-    )
-    parser.add_argument(
-        "--val",
-        type=str,
-        help="The directory where the validation data set is stored",
-        action="append",
-    )
-    parser.add_argument(
-        "--test",
-        type=str,
-        help="The directory where the test data set is stored",
-        action="append",
-    )
-    parser.add_argument(
-        "--val_class_ids",
-        nargs="+",
-        action="append",
-        type=int,
-        help="Class ids of the classes to be used in the validation dataset. Will use the imagenet 100 ids in ascending order by default.",
-    )
-    parser.add_argument(
-        "--train_class_ids",
-        nargs="+",
-        action="append",
-        type=int,
-        help="Class ids of the classes to be used in the training dataset. Will use ids 0-99 by default.",
-    )
-    parser.add_argument(
-        "--val_int",
-        type=int,
-        default=8,
-        help="Number of steps after which to perform a validation (repeated)",
-    )
-    parser.add_argument(
-        "--num_workers",
-        type=int,
-        default=4,
-        help="Number of workers that the dataloader uses. ",
-    )
-    parser.add_argument(
-        "--n_test_samples_from_train",
-        type=int,
-        default=0,
-        help="Number of samples to take from the train set as an optional set for imagenet - optional and not used.",
-    )
-# Important training and model hyperparameters
-    parser.add_argument(
-        "--model",
-        type=str,
-        default="tiny_vit_11m_224",
-        help="Architecture of the student model, e.g. 'resnet18' or 'mobilenet_v2'. 'cct' to use a compact convolutional transformer.",
-    )
-    parser.add_argument(
-        "--teacher",
-        type=str,
-        default="ViT-B-32",
-        help="Architecture of the teacher model, select from open_clip",
-    )
-    parser.add_argument(
-        "--epochs",
-        default=1,
-        type=int,
-        help="Number of epochs the model is trained for",
-    )
-    parser.add_argument(
-        "--batch_size",
-        type=int,
-        help="Batch size to use during model training",
-        default=10,
-    )
-    parser.add_argument(
-        "--learning_rate",
-        type=float,
-        help="Learning rate to use during model training",
-        default=0.01,
-    )
-    parser.add_argument(
-        "--log_temperature",
-        type=float,
-        default=0.0,
-        help="Log temperature to use in the contrastive (distillation) loss.",
-    )
-    parser.add_argument(
-        "--train_temperature",
-        type=str,
-        help="Set to True to use make the temperature a trainable parameter.",
-        default="False",
-    )
-    parser.add_argument(
-        "--distil_alpha",
-        type=float_in_range(0.0, 1.0),
-        default=0.5,
-        help="Alpha used to balance the knowledge distillation loss against the cross-entropy loss derived from the ground truth. ",
-    )
-    parser.add_argument(
-        "--contrastive_lambda",
-        type=float_in_range(0.0, 1.0),
-        default=0.5,
-        help="Lambda used to balance the text-to-image and image-to-text loss. ",
-    )
-    parser.add_argument(
-        "--save_model_path",
-        type=str,
-        help="Path to the location to save the model to after training. If this argument is not set, the model will not be saved.",
-    )
-    parser.add_argument(
-        "--start_model_path",
-        type=str,
-        help="Path to the location to get the pretrained checkpoint to initialize the model. If this argument is not set, the model will not be initialized specifically.",
-    )
-    parser.add_argument(
-        "--teacher_pretrained",
-        type=str,
-        default="openai",
-        help="Pretraining dataset of teacher.",
-    )
-    parser.add_argument(
-        "--embedding_dim",
-        type=int,
-        default=512,
-        help="Dimension of the embedding space of the CLIP model.",
-    )
-    parser.add_argument(
-        "--encoder_output_dim",
-        type=int,
-        default=512,
-        help="Dimension of the output of the student vision encoder before the projection head.",
-    )
-    parser.add_argument(
-        "--training_loss",
-        type=str,
-        help="Select supervised training loss from: contrastive, ce (cross-entropy)",
-        required=True,
-    )
-    parser.add_argument(
-        "--distillation_loss",
-        type=str,
-        help="Select distillation loss from: L2, cos, spherical, contrastive",
-        required=True,
-    )
-    parser.add_argument(
-        "--n_train_images_per_class",
-        type=int,
-        default=1000,
-        help="Number of images per class in the training set.",
-    )
-    parser.add_argument(
-        "--diverse_prompts",
-        type=str,
-        help="Set to True to use diverse prompts for each image in the training set.",
-        default="False",
-    )
-    parser.add_argument(
-        "--options_per_attribute",
-        type=int,
-        default=15,
-        help="Number of options per attribute for the diverse images.",
-    )
-    parser.add_argument(
-        "--use_diverse_prompts_for_inference",
-        type=str,
-        help="Set to True to use diverse prompts for inference.",
-        default="False",
-    )
-    # Additional training and model hyperparameters
-    parser.add_argument(
-        "--cpu",
-        action="store_true",
-        default=False,
-        help="Set this flag to train on CPU.",
-    )
-    parser.add_argument(
-        "--optimizer",
-        type=str,
-        help="The optimizer to train the model with. Expects the class name of the optimizer in torch.optim as string, e.g., 'AdamW'.",
-        default="AdamW",
-    )
-    parser.add_argument(
-        "--warmup",
-        type=int,
-        default=0,
-        help="Number of warmup epoch with increasing the learning rate until the full lr is reached (added to --epochs).",
-    )
-    parser.add_argument(
-        "--momentum",
-        type=float,
-        default=0.9,
-        help="Momentum used by optimizer. currently only used by SGD",
-    )
-    parser.add_argument(
-        "--weight_decay",
-        type=float,
-        default=0.0,
-        help="Weight decay",
-    )
-# logging
-    parser.add_argument(
-        "--logdir",
-        type=str,
-        help="The directory the logs will be saved to.",
-        required=True,
-    )
-    parser.add_argument(
-        "--logname",
-        type=str,
-        default="",
-        help="Name of the experiment, will be used as name of the resulting tensorboard.",
-        required=True,
-    )
-    parser.add_argument(
-        "--save_checkpoints",
-        type=str,
-        help="Set to True to save checkpoints after every epoch",
-        default="True",
-    )
-    parser.add_argument(
-        "--logversion",
-        default=0,
-        help="Number of the version of the experiment.",
-    )
-# testing
-    parser.add_argument(
-        "--checkpoints",
-        type=str,
-        help="Directory names for checkpoints to be evaluated",
-        nargs='+', 
-        default=[],
-    )
-# hardware
-    parser.add_argument(
-        "--devices",
-        type=int,
-        default=1,
-        help="Number of gpus per node.",
-    )
-    parser.add_argument(
-        "--nodes",
-        type=int,
-        default=1,
-        help="Number of nodes.",
-    )
-    parser.add_argument(
-        "--mixed_precision",
-        action="store_true",
-        default=False,
-        help="Set this flag to use mixed precision for training.",
-    )
-    return parser
-
-
-"""
-    Use post_parse function for prompt and image generation
-"""
 def post_parse(args):
-    if args.dataset=="imagenet":
-        if args.train_class_ids[0][0]==1000:
-            args.train_class_ids=[[i for i in range(1000)]]
-        if args.val_class_ids!=None:
-            if args.val_class_ids[0][0]==1000:
-                args.val_class_ids=[[i for i in range(1000)]]
-        train_class_ids = [id for sublist in args.train_class_ids for id in sublist]
-    elif args.dataset=="pets":
+    """
+    Use post_parse function to initialize the class(numbers) for different dataset
+    """
+    if args.dataset=="pets":
         train_class_ids = [id for id in range(37)]
         args.train_class_ids = [train_class_ids]
         args.val_class_ids = [train_class_ids]
@@ -370,10 +88,11 @@ def post_parse(args):
             args.captions = read_captions(train_class_ids,args.n_train_images_per_class,args.train)
     return args
 
-"""
-    Utility functions for args
-"""
+
 def float_in_range(min, max):
+    """
+    Utility function to check if a float is in a range
+    """
     def verify_float_in_range(arg):
         try:
             value = float(arg)
@@ -388,19 +107,18 @@ def float_in_range(min, max):
     return verify_float_in_range
 
 def string_with_spaces(string):
+    """
+    Utility function to replace _ in a string
+    """
     return str(string).replace("_", " ")
 
-"""
-    Contrastive loss
-"""
-
-def contrastive_loss(tokens1, tokens2, log_temperature):
+def contrastive_loss(features1, features2, log_temperature):
     """loss for contrastive training."""
     # similarity matrix
-    token_similarity = (tokens1 @ tokens2.T) * torch.exp(-log_temperature)
-    # columnwise reduction of similarity matrix (i.e. over tokens2)
+    token_similarity = (features1 @ features2.T) * torch.exp(-log_temperature)
+    # columnwise reduction of similarity matrix (i.e. over features2)
     dividend=torch.sum(torch.exp(token_similarity),dim=-1)
-    # diagonal = similariy between same entries in tokens1 and token2
+    # diagonal = similariy between same entries in features1 and token2
     contrastive_loss_vector=torch.exp(torch.diagonal(token_similarity, 0)) / dividend
     contrastive_loss_vector = (-1)*torch.log(contrastive_loss_vector)
     contrastive_loss = contrastive_loss_vector.mean()
@@ -462,15 +180,24 @@ class StudentModel(LightningModule):
             self.temperature = nn.Parameter(data=args.log_temperature * torch.ones(1), requires_grad=False)
        
     def forward(self, x):
+        """
+        Forward pass: encode image and project
+        """
         image_encoded=self.image_encoder(x)
         return self.image_token_projector(image_encoded)
 
     def pass_image_encoder(self, x):
+        """
+        Encode image without projection
+        """
         image_encoded=self.image_encoder(x)
         return image_encoded
 
 
     def training_step(self, batch, batch_idx):
+        """
+        Single training step
+        """
         # Get training batch
         x, y = batch
         # Format y correctly
@@ -481,7 +208,7 @@ class StudentModel(LightningModule):
             self.teacher_model.eval()
             image_features_teacher = self.teacher_model.encode_image(x)
             image_features_teacher_normalized = functional.normalize(image_features_teacher, p=2, dim=-1)
-            # Normalize tokens
+            # Normalize features
             image_features_teacher = image_features_teacher_normalized
             # text embedding
             if args.dataset!="datacomp":
@@ -489,7 +216,7 @@ class StudentModel(LightningModule):
                 photo_prompts = [inference_prompts(args.dataset,image_class_ids[class_num]) for class_num in y]
                 photo_prompts_tokenized = self.tokenizer(photo_prompts).to(device)
                 text_features = self.teacher_model.encode_text(photo_prompts_tokenized)
-                # Normalize tokens
+                # Normalize features
                 text_features_normalized = functional.normalize(text_features, p=2, dim=-1)
                 text_features = text_features_normalized
                 # Compute logits of the teacher 
@@ -502,7 +229,7 @@ class StudentModel(LightningModule):
             logits_teacher = (text_features @ image_features_teacher.T) * torch.exp(-self.temperature)
         # Compute image embeddings of the student
         image_features_student = self(x)
-        # Normlize student tokens
+        # Normlize student features
         image_features_student_normalized = functional.normalize(image_features_student, p=2, dim=-1)
         image_features_student = image_features_student_normalized
         logits_student = (text_features @ image_features_student.T) * torch.exp(-self.temperature)
@@ -536,10 +263,13 @@ class StudentModel(LightningModule):
         return overall_loss
 
     def validation_step(self, batch, batch_idx):
+        """
+        Single validation step
+        """
         self.teacher_model.eval()
         self.eval()
         x, y = batch
-        # Compute tokens as for training
+        # Compute features as for training
         image_class_ids = [id for sublist in args.val_class_ids for id in sublist]
         photo_prompts = [inference_prompts(args.dataset,image_class_ids[class_num]) for class_num in y] 
         device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -581,7 +311,7 @@ class StudentModel(LightningModule):
             overall_loss = contrastive_loss_batch
         else:
             overall_loss = ((self.distil_alpha) * distill_loss) + ((1- self.distil_alpha) * contrastive_loss_batch)
-        # normalize tokens if not done before
+        # normalize features if not done before
         image_features_student_normalized = functional.normalize(image_features_student, p=2, dim=-1)
         image_features_teacher_normalized = functional.normalize(image_features_teacher, p=2, dim=-1)
         # Compute predictions if not done befor for CE loss
@@ -607,6 +337,9 @@ class StudentModel(LightningModule):
 
 
     def train_dataloader(self) -> TRAIN_DATALOADERS:
+        """
+        set up train dataloader, select between domain-agnostic or domain-specific dataloader
+        """
         if args.dataset == "datacomp" or args.dataset == "laion":
             train_dataloader = get_wds_loader(batch_size=args.batch_size, num_workers=args.num_workers)
         else:
@@ -614,24 +347,20 @@ class StudentModel(LightningModule):
         return train_dataloader
 
     def val_dataloader(self) -> EVAL_DATALOADERS:
-        if args.dataset=="imagenet":
-            if eval(args.synthetic_data)==True:
-                train_split, generated_train = get_train_data_splits(self.args)
-            else:
-                train_split, generated_train = get_train_data_splits_real(self.args)
-
-            val_dataset = get_concat_dataset(args=self.args, is_train=False)
-
-            val_dataloader = DataLoader(val_dataset, batch_size=self.args.batch_size,num_workers=args.num_workers,)
-        else:
-            val_dataloader = test_dataloader_other(self.args)
+        """
+        set up validation loader
+        """
+        val_dataloader = test_dataloader_other(self.args)
         return val_dataloader
 
     def test_step(self, batch, batch_idx):
+        """
+        perform evaluation of a model checkpoint
+        """
         self.teacher_model.eval()
         self.eval()
         x, y = batch
-        # Compute tokens as for training
+        # Compute features as for training
         if args.dataset=="pets":
             complete_class_ids = range(37)
             photo_prompts = [inference_prompts(args.dataset,class_num.item()) for class_num in y]
@@ -649,9 +378,6 @@ class StudentModel(LightningModule):
             photo_prompts = [inference_prompts(args.dataset,class_num.item()) for class_num in y]
         elif args.dataset=="cars":
             complete_class_ids = range(196)
-            photo_prompts = [inference_prompts(args.dataset,class_num.item()) for class_num in y]
-        elif args.dataset=="imagenet":
-            complete_class_ids = range(1000)
             photo_prompts = [inference_prompts(args.dataset,class_num.item()) for class_num in y]
         device = "cuda" if torch.cuda.is_available() else "cpu"
         photo_prompts_tokenized = self.tokenizer(photo_prompts).to(device)
@@ -695,24 +421,11 @@ class StudentModel(LightningModule):
             overall_loss = contrastive_loss_batch
         else:
             overall_loss = ((self.distil_alpha) * distill_loss) + ((1- self.distil_alpha) * contrastive_loss_batch)
-        # normalize tokens if not done before
+        # normalize features if not done before
         # image_features_student_normalized = functional.normalize(image_features_student, p=2, dim=-1)
         # image_features_teacher_normalized = functional.normalize(image_features_teacher, p=2, dim=-1)
         # Compute predictions
-        if args.dataset=="pets":
-            photo_prompts_per_class = [inference_prompts(args.dataset,class_num) for class_num in complete_class_ids]
-        elif args.dataset=="food":
-            photo_prompts_per_class = [inference_prompts(args.dataset,class_num) for class_num in complete_class_ids]
-        elif args.dataset=="flowers":
-            photo_prompts_per_class = [inference_prompts(args.dataset,class_num) for class_num in complete_class_ids]
-        elif args.dataset=="aircraft":
-            photo_prompts_per_class = [inference_prompts(args.dataset,class_num) for class_num in complete_class_ids]
-        elif args.dataset=="texture":
-            photo_prompts_per_class = [inference_prompts(args.dataset,class_num) for class_num in complete_class_ids]
-        elif args.dataset=="cars":
-            photo_prompts_per_class = [inference_prompts(args.dataset,class_num) for class_num in complete_class_ids]
-        elif args.dataset=="imagenet":
-            photo_prompts_per_class = [inference_prompts(args.dataset,class_num) for class_num in complete_class_ids]
+        photo_prompts_per_class = [inference_prompts(args.dataset,class_num) for class_num in complete_class_ids]
         photo_prompts_per_class_tokenized = self.tokenizer(photo_prompts_per_class).to(device)
         text_features_per_class = self.teacher_model.encode_text(photo_prompts_per_class_tokenized)
         text_features_per_class /= text_features_per_class.norm(dim=-1, keepdim=True)
@@ -740,11 +453,16 @@ class StudentModel(LightningModule):
     
     
     def on_before_zero_grad(self, *args, **kwargs):
-        # scale temperature to be between 1/100 and 100
+        """
+        scale temperature to be between 1/100 and 100
+        """
         torch.clamp(self.temperature, min=-4.60517018599, max=4.60517018599)
 
 
     def get_parameter_groups_for_adamW(self):
+        """
+        get regularized/non-regularized parameters for weight decay (if selected)
+        """
         regularized_parameters = []
         non_regularized_parameters = []
         for parameter_name, parameter in self.image_encoder.named_parameters():
@@ -770,6 +488,9 @@ class StudentModel(LightningModule):
         ]
 
     def configure_optimizers(self):
+        """
+        Configure optimizer
+        """
         if self.optimizer == "AdamW":
             if self.teacher_name == "RN101":
                 optimizer = getattr(torch.optim, self.optimizer)(
@@ -990,22 +711,7 @@ def main(args):
                         ]
                     )
             test_data=ImageFolder(out_dir,transform=test_transform)
-        elif args.dataset=="imagenet":
-            args.train=args.test
-            args.val=args.test
-            if eval(args.synthetic_data)==True:
-                not_needed_dataloader1, test_dataloader, not_needed_dataloader2 = get_dataloaders(
-                    args=args
-                )
-            else:
-                args.n_test_samples=len(args.val_class_ids[0])*2000#args.n_test_images_per_class
-                args.n_train_samples=args.n_test_samples
-                args.n_val_samples=args.n_test_samples
-                not_needed_dataloader1, test_dataloader, not_needed_dataloader1 = get_dataloaders_real(
-                    args=args
-                )
         else:
-            print("Using normalization for CLIP models")
             test_transform = Compose(
                     [
                         Resize(256), # for the paper we used 224 here which cuts less from the background in the centercrop
@@ -1028,8 +734,7 @@ def main(args):
                 test_data = datasets.StanfordCars(root=args.test[0],split="test",transform=test_transform)
             elif args.dataset=="food":
                 test_data = datasets.Food101(root=args.test[0],split="test",transform=test_transform)
-        if args.dataset!="imagenet": # for imagenet we already get a dataloader
-            test_dataloader=DataLoader(test_data, batch_size=args.batch_size, num_workers=args.num_workers, shuffle=False,drop_last=False)
+        test_dataloader=DataLoader(test_data, batch_size=args.batch_size, num_workers=args.num_workers, shuffle=False,drop_last=False)
         distillation_losses = []
         training_losses = []
         overall_losses = []
