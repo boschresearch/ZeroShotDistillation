@@ -352,6 +352,12 @@ def default_loader(path: str, image: bool) -> Any:
         path = path.replace('png', 'txt')
         with open(path, 'r') as f:
             caption = f.read()
+            # if necessary, remove weights from the prompts that were used for the diffusion model
+            # caption = caption.replace('+','') # all domain specific datasets apart from ImageNet
+            # caption = caption.replace('-','') # flowers, cars, aircraft, texture 
+            # caption = caption.replace('1.2','') # food
+            # caption = caption.replace('1.5','') # food
+            # caption = caption.replace('0.1','') # food, flowers
             return caption
 
 class ImageFolder(DatasetFolder):
@@ -403,15 +409,23 @@ class ImageFolder(DatasetFolder):
         self.imgs = self.samples
 
 class ImageCaptionFolder(DatasetFolder):
-    """A generic data loader where the images are arranged in this way by default: ::
+    """A generic data loader where the images and captions are arranged in this way by default: ::
 
-        root/dog/xxx.png
-        root/dog/xxy.png
-        root/dog/[...]/xxz.png
+        root/images/dog/xxx.png
+        root/images/dog/xxy.png
+        root/images/dog/[...]/xxz.png
 
-        root/cat/123.png
-        root/cat/nsdf3.png
-        root/cat/[...]/asd932_.png
+        root/images/cat/123.png
+        root/images/cat/nsdf3.png
+        root/images/cat/[...]/asd932_.png
+
+        root/captions/dog/xxx.txt
+        root/captions/dog/xxy.txt
+        root/images/dog/[...]/xxz.txt
+
+        root/captions/cat/123.txt
+        root/captions/cat/nsdf3.txt
+        root/captions/cat/[...]/asd932_.txt
 
     This class inherits from :class:`~torchvision.datasets.DatasetFolder` so
     the same methods can be overridden to customize the dataset.
