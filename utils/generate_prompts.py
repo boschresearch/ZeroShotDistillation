@@ -766,10 +766,3 @@ def read_captions(class_ids,prompts_per_class,savedir):
             prompts[index*prompts_per_class+index2] = text_file.read()
             text_file.close()
     return prompts
-"""
-    Remove weighting from prompts
-"""
-def remove_weighting(s):
-    target_string1 = s.replace('-', '')
-    target_string2 = target_string1.replace('-', '')
-    return target_string2
