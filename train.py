@@ -83,7 +83,7 @@ def post_parse(args):
         args.num_train_classes = len([id for sublist in args.train_class_ids for id in sublist])
     if args.train!=None:
         if eval(args.synthetic_data)==True:
-            if eval(args.diverse_prompts):
+            if eval(args.diverse_prompts) or eval(args.use_diverse_prompts_for_inference):
                 args.n_train_images_per_class=get_all_pairs_length(args.options_per_attribute)
             args.captions = read_captions(train_class_ids,args.n_train_images_per_class,args.train)
     return args
@@ -199,7 +199,10 @@ class StudentModel(LightningModule):
         Single training step
         """
         # Get training batch
-        x, y = batch
+        if eval(args.use_diverse_prompts_for_inference):
+            x, c, y, _ = batch
+        else:
+            x, y = batch
         # Format y correctly
         y = y.repeat(len(x)) if isinstance(x, list) else y
         # Compute text embeddings without influence on the gradient
@@ -213,7 +216,10 @@ class StudentModel(LightningModule):
             # text embedding
             if args.dataset!="datacomp":
                 image_class_ids = [id for sublist in args.train_class_ids for id in sublist]
-                photo_prompts = [inference_prompts(args.dataset,image_class_ids[class_num]) for class_num in y]
+                if eval(self.use_diverse_prompts_for_inference)==True:
+                    photo_prompts = [caption for caption in c]
+                else:
+                    photo_prompts = [inference_prompts(args.dataset,image_class_ids[class_num]) for class_num in y]
                 photo_prompts_tokenized = self.tokenizer(photo_prompts).to(device)
                 text_features = self.teacher_model.encode_text(photo_prompts_tokenized)
                 # Normalize features
@@ -233,7 +239,6 @@ class StudentModel(LightningModule):
         image_features_student_normalized = functional.normalize(image_features_student, p=2, dim=-1)
         image_features_student = image_features_student_normalized
         logits_student = (text_features @ image_features_student.T) * torch.exp(-self.temperature)
-
 
         # Compute distillation loss
         if self.distil_alpha>0.0:
