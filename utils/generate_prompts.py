@@ -1,6 +1,21 @@
-"""
-    Functions for generating prompts for inference and image generation.
-"""
+#!/usr/local/bin/python3
+# Copyright (c) 2024 Robert Bosch GmbH
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published
+# by the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program. If not, see <https://www.gnu.org/licenses/>.
+#
+# -*- coding: utf-8 -*
+
 import torch
 import random
 import os
@@ -315,6 +330,7 @@ def create_angles(N,class_name,LLM,tokenizer):
     Calls to LLama
 """
 def llama_superclass(dataset,class_ids,LLM_model_id,LLM_local,tokenizer_local):
+    """Get superclasses for caption generation with Llama."""
     # overall attribute collections
     llama_superclasses=[]
     if dataset=="pets":
@@ -595,10 +611,9 @@ def llama_attributes_repeated(dataset,class_ids,LLM_model_id,max_n_tokens,temp,k
         llama_positions.append(positions)
         llama_angles.append(angles)
     return superclasses_llama,llama_locations,llama_daytimes,llama_positions,llama_angles
-"""
-    Create diverse captions based on location, time of day, position and camera angle using one call to the LLM for every option.
-"""
+
 def get_all_pairs_length(options_per_attribute):
+    """ Get lengtn of all pairs combination."""
     parameter_ids = [range(options_per_attribute),range(options_per_attribute),range(options_per_attribute),range(options_per_attribute)]
     N=0
     for i, pairs in enumerate(AllPairs(parameter_ids)):
