@@ -8,6 +8,6 @@ python generate_data.py \
 --generate_prompts True \
 --all_pairs_prompts True \
 --options_per_attribute 5 \
---logname finetuning \
+--logname pets_domain_specific \
 --devices 1 \
 --nodes 1 \
