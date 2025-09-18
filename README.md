@@ -6,6 +6,9 @@
 
 This is the code release for the TMLR publication "Feature Distillation Improves Zero-Shot Transfer from Synthetic Images" by Niclas Popp, Jan Hendrik Metzen and Matthias Hein. 
 
+<p align="center">
+  <img src="teaser.png" alt="Teaser Figure" width="90%">
+</p>
 
 The codebase consists of three components: 
 
