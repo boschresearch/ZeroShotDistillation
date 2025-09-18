@@ -327,16 +327,16 @@ class StudentModel(LightningModule):
         y_hat = (100.0 * image_features_student_normalized @ text_features_per_class_normalized.T).softmax(dim=-1)
         y_hat_teacher = (100.0 * image_features_teacher_normalized @ text_features_per_class_normalized.T).softmax(dim=-1)
         # print(teacher_predictions)log
-        accuracy_student = torch.tensor(((torch.max(y_hat.data, 1)[1] == y).sum().item()) / y.size(0))
-        accuracy_teacher = torch.tensor(((torch.max(y_hat_teacher.data, 1)[1] == y).sum().item()) / y.size(0))
+        top1_accuracy_student = self.top1acc(y_hat, y)
+        top1_accuracy_teacher = self.top1acc(y_hat_teacher, y)
         # log losses
         if self.distil_alpha>0.0:
             self.log('val_distillation_loss', distill_loss.item(), on_epoch=True, sync_dist=True)
         if self.distil_alpha<1.0:
             self.log('val_training_loss', contrastive_loss_batch.item(), sync_dist=True)
         self.log('val_overall_loss', overall_loss.item(), sync_dist=True)
-        self.log('val_accuracy_student', accuracy_student.item(), sync_dist=True)
-        self.log('val_accuracy_teacher', accuracy_teacher.item(), sync_dist=True)
+        self.log('val_accuracy_student', top1_accuracy_student.item(), sync_dist=True)
+        self.log('val_accuracy_teacher', top1_accuracy_teacher.item(), sync_dist=True)
         print("validated")
         return y_hat, y
 
@@ -436,8 +436,6 @@ class StudentModel(LightningModule):
         text_features_per_class /= text_features_per_class.norm(dim=-1, keepdim=True)
         y_hat = (100.0 * image_features_student @ text_features_per_class.T).softmax(dim=-1)
         y_hat_teacher = (100.0 * image_features_teacher @ text_features_per_class.T).softmax(dim=-1)
-        accuracy_student = torch.tensor(((torch.max(y_hat.data, 1)[1] == y).sum().item()) / y.size(0))
-        accuracy_teacher = torch.tensor(((torch.max(y_hat_teacher.data, 1)[1] == y).sum().item()) / y.size(0))
         # top5_accuracy_student = self.top5acc(y_hat, y)
         # top5_accuracy_teacher = self.top5acc(y_hat_teacher, y)
         top1_accuracy_student = self.top1acc(y_hat, y)
