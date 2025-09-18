@@ -36,66 +36,9 @@ from utils.labels import (
     FLOWER_LABELS,
     AIRCRAFT_LABELS,
     EUROSAT_LABELS,
-    TEXTURES_LABELS,
-    REVERSE_IMAGENET_DIR_NAMES
+    TEXTURES_LABELS
 )
 
-"""
-    Utilities for ImageNet
-"""
-def label_to_text(label):
-    return IMAGENET_LABELS[label]
-
-def text_to_label(text):
-    return REVERSE_IMAGENET_LABELS[text]
-
-def dir_name_to_label(dir_name):
-    return IMAGENET_DIR_NAMES[dir_name]
-
-def label_to_dir_name(label):
-    return REVERSE_IMAGENET_DIR_NAMES[label]
-
-with open("./path/to/imagenet100_classes.txt", "r") as f:
-    IMAGENET_100_DIR_NAMES = [line.strip() for line in f]
-IMAGENET_100_LABELS = [dir_name_to_label(dirname) for dirname in IMAGENET_100_DIR_NAMES]
-
-def get_synset(id):
-    dirname = label_to_dir_name(id)
-    pos = dirname[0]
-    offset = int(dirname[1:])
-    return wn.synset_from_pos_and_offset(pos, offset)
-
-def definition_prompt_imagenet(id):
-    synset = get_synset(id)
-    word = synset.lemmas()[0].name().replace("_", " ")
-    definition = synset.definition()
-    return f"{word}, {definition}"
-
-def simple_prompt_imagenet(id):
-    class_name = IMAGENET_LABELS[id]
-    return class_name
-
-def photo_prompt_imagenet(id):
-    word = simple_prompt_imagenet(id)
-    return f"a photo of a {word}"
-
-def prompt_templates_imagenet(id):
-    classname = simple_prompt_imagenet(id)
-    # use imagenet templates from https://github.com/openai/CLIP/blob/main/notebooks/Prompt_Engineering_for_ImageNet.ipynb
-    prompts = [template.format(classname) for template in imagenet_templates]
-    return prompts
-
-def single_prompt_templates_imagenet(id,k):
-    classname = simple_prompt_imagenet(id)
-    # use imagenet templates from https://github.com/openai/CLIP/blob/main/notebooks/Prompt_Engineering_for_ImageNet.ipynb
-    specific_template = imagenet_templates[k]
-    prompts = specific_template.format(classname)
-    return prompts
-
-def photo_prompt_imagenet_from_label(label):
-    id = IMAGENET_DIR_NAMES[label]
-    word = simple_prompt_imagenet(id)
-    return f"a photo of a {word}"
 """
     Utilities for Oxford Pets
 """
