@@ -2235,7 +2235,6 @@ FOOD_LABELS = {
     101: "waffles",
 }
 
-
 CAR_LABELS = [
     "AM General Hummer SUV 2000",
     "Acura RL Sedan 2012",
@@ -2539,7 +2538,6 @@ FLOWER_LABELS = [
     "trumpet creeper", 
     "blackberry lily",
 ]
-
 
 AIRCRAFT_LABELS = [
     '707-320',
