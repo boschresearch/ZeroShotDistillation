@@ -1,3 +1,21 @@
+#!/usr/local/bin/python3
+# Copyright (c) 2024 Robert Bosch GmbH
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published
+# by the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program. If not, see <https://www.gnu.org/licenses/>.
+#
+# -*- coding: utf-8 -*
+
 import argparse
 import sys
 import torch
@@ -36,7 +54,7 @@ from torchmetrics.classification import MulticlassAccuracy
 from utils.generate_prompts import inference_prompts, get_all_pairs_length,read_captions
 from utils.CustomImageFolder import ImageCaptionFolder
 from utils.StudentArchitectureComponents import ImageEncoder, Projection
-from utils.datahandling_domainspecific import train_and_test_dataloader, train_dataloader_other, test_dataloader_other, get_test_data
+from utils.datahandling_domainspecific import train_and_test_dataloader, train_dataloader_other, test_dataloader_other
 from utils.datahandling_domainagnostic import get_wds_loader
 from utils.argparsing import add_train_args
 
