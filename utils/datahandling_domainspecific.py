@@ -1,6 +1,21 @@
-"""
-    Functions for handling real and synthetic data for OxfordIIITPet, Food101, etc.
-"""
+#!/usr/local/bin/python3
+# Copyright (c) 2024 Robert Bosch GmbH
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published
+# by the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program. If not, see <https://www.gnu.org/licenses/>.
+#
+# -*- coding: utf-8 -*-
+
 import argparse
 import torch
 import torch.multiprocessing as mp
@@ -27,7 +42,7 @@ from utils.CustomImageFolder import ImageCaptionFolder
 
 
 def train_and_test_dataloader(args):
-    print("getting data from utils")
+    """Return train dataloader and dummy validataion/test dataloader for domainspecific datasets."""
     ImageNet_transform = Compose(
         [
             RandomResizedCrop(224),
@@ -152,6 +167,7 @@ def train_and_test_dataloader(args):
     return train_dataloader, test_dataloader
 
 def test_dataloader_other(args):
+    """Return validataion/test dataloader for domainspecific datasets."""
     ImageNet_transform = Compose(
         [
             Resize(256),
@@ -199,6 +215,7 @@ def test_dataloader_other(args):
     return test_dataloader
 
 def train_dataloader_other(args):
+    """Return train dataloader for domainspecific datasets."""
     ImageNet_transform = Compose(
         [
             RandomResizedCrop(224),
@@ -289,32 +306,3 @@ def train_dataloader_other(args):
                                 shuffle=True,
                                 )
     return train_dataloader
-
-def get_test_data(args):
-    ImageNet_transform = Compose(
-        [
-            Resize(256),
-            CenterCrop(224),
-            ToTensor(),
-            Normalize(mean=(0.48145466, 0.4578275, 0.40821073), std=(0.26862954, 0.26130258, 0.27577711))
-        ]
-    )
-    if args.dataset=="pets":
-        train_data = datasets.OxfordIIITPet(
-            root=args.test[0],
-            split="trainval",
-            transform=ImageNet_transform
-        )
-        test_data = datasets.OxfordIIITPet(
-            root=args.test[0],
-            split="test",
-            transform=ImageNet_transform
-        )
-    elif args.dataset=="food":
-        test_data = datasets.Food101(
-            root=args.test[0],
-            split="test",
-            transform=ImageNet_transform
-        )
-    else:
-        print("No suitable test dataset selected")
