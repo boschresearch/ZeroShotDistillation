@@ -2,7 +2,6 @@ argparse
 pytorch-lightning==2.1.1
 torch==2.1.0
 torchvision==0.16.0
-clip
 open_clip_torch==2.26.1
 nltk==3.8.1
 torchmetrics==1.2.0
