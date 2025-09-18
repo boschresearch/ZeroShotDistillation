@@ -16,7 +16,25 @@
 #
 # -*- coding: utf-8 -*
 
+
 import argparse
+
+def float_in_range(min, max):
+    """
+    Utility function to check if a float is in a range
+    """
+    def verify_float_in_range(arg):
+        try:
+            value = float(arg)
+        except ValueError:
+            raise argparse.ArgumentTypeError("Argument must of type float")
+        if value < min or value > max:
+            raise argparse.ArgumentTypeError(
+                f"Argument hast to be in range [{min}..{max}]"
+            )
+        return value
+
+    return verify_float_in_range
 
 def add_train_args(parser):
 # Parameters for the dataset
@@ -150,7 +168,7 @@ def add_train_args(parser):
     parser.add_argument(
         "--teacher_pretrained",
         type=str,
-        default="openai",
+        default="datacomp_xl_s13b_b90k",
         help="Pretraining dataset of teacher.",
     )
     parser.add_argument(
