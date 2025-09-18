@@ -1,3 +1,5 @@
+# Adapted from https://docs.pytorch.org/vision/main/_modules/torchvision/datasets/folder.html#ImageFolder
+
 import os
 import os.path
 
@@ -17,7 +19,6 @@ def has_file_allowed_extension(filename: str, extensions: Union[str, Tuple[str, 
     """
     return filename.lower().endswith(extensions if isinstance(extensions, str) else tuple(extensions))
 
-
 def is_image_file(filename: str) -> bool:
     """Checks if a file is an allowed image extension.
 
@@ -28,7 +29,6 @@ def is_image_file(filename: str) -> bool:
         bool: True if the filename ends with a known image extension
     """
     return has_file_allowed_extension(filename, IMG_EXTENSIONS)
-
 
 def find_classes(directory: str) -> Tuple[List[str], Dict[str, int]]:
     """Finds the class folders in a dataset.
