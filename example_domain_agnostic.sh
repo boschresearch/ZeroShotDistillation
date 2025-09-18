@@ -8,7 +8,7 @@ python train.py \
 --encoder_output_dim 448 \
 --dataset datacomp \
 --logdir /logs \
---logname domain_agnostic \
+--logname domain_agnostic_datacomp \
 --training_loss CLIP \
 --distillation_loss L2 \
 --distil_alpha 0.0 \
