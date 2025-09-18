@@ -1,13 +1,26 @@
+#!/usr/local/bin/python3
+# Copyright (c) 2024 Robert Bosch GmbH
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published
+# by the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program. If not, see <https://www.gnu.org/licenses/>.
+#
+# -*- coding: utf-8 -*
+
 import argparse
 import random
 
 from utils.generate_prompts import inference_prompts, generate_prompts_all_pairs_repeated,generate_simple_prompts
 from utils.generate_images import generate_images, generate_images_accelerate
-
-def parse_args(parser):
-    parser = add_train_args(parser)
-    args = parser.parse_args()
-    return post_parse(args)
 
 def add_train_args(parser):
 # args are not fully cleaned (yet)
@@ -183,6 +196,9 @@ def parse_args(parser):
     return post_parse(args)
 
 def post_parse(args):
+    """
+    Use post_parse function to initialize the class(numbers) for different dataset
+    """
     if args.dataset=="imagenet":
         if args.train_class_ids[0][0]==1000:
             args.train_class_ids=[[i for i in range(1000)]]
