@@ -16,6 +16,7 @@
 #
 # -*- coding: utf-8 -*
 
+
 import argparse
 import sys
 import torch
@@ -106,24 +107,6 @@ def post_parse(args):
             args.captions = read_captions(train_class_ids,args.n_train_images_per_class,args.train)
     return args
 
-
-def float_in_range(min, max):
-    """
-    Utility function to check if a float is in a range
-    """
-    def verify_float_in_range(arg):
-        try:
-            value = float(arg)
-        except ValueError:
-            raise argparse.ArgumentTypeError("Argument must of type float")
-        if value < min or value > max:
-            raise argparse.ArgumentTypeError(
-                f"Argument hast to be in range [{min}..{max}]"
-            )
-        return value
-
-    return verify_float_in_range
-
 def string_with_spaces(string):
     """
     Utility function to replace _ in a string
@@ -182,6 +165,7 @@ class StudentModel(LightningModule):
             # load teacher
             self.teacher_name=args.teacher
             teacher_model, _, self.preprocess = open_clip.create_model_and_transforms(args.teacher, pretrained=args.teacher_pretrained)
+            print("Teacher: ", args.teacher)
             self.tokenizer = open_clip.get_tokenizer(args.teacher)
             self.teacher_model = teacher_model
         # Setting teacher parameters as fixed/non-trainable
@@ -234,7 +218,7 @@ class StudentModel(LightningModule):
             # text embedding
             if args.dataset!="datacomp":
                 image_class_ids = [id for sublist in args.train_class_ids for id in sublist]
-                if eval(self.use_diverse_prompts_for_inference)==True:
+                if eval(args.use_diverse_prompts_for_inference)==True:
                     photo_prompts = [caption for caption in c]
                 else:
                     photo_prompts = [inference_prompts(args.dataset,image_class_ids[class_num]) for class_num in y]
@@ -259,7 +243,7 @@ class StudentModel(LightningModule):
         logits_student = (text_features @ image_features_student.T) * torch.exp(-self.temperature)
 
         # Compute distillation loss
-        if self.distil_alpha>0.0:
+        if self.distil_alpha<1.0:
             if args.distillation_loss=="L2":
                 difference_to_teacher = image_features_student-image_features_teacher
                 L2_distance_to_teacher = torch.norm(difference_to_teacher, dim=-1)
@@ -271,17 +255,17 @@ class StudentModel(LightningModule):
             else:
                 print("Select appropriate feature loss")
         # Compute overall loss
-        if self.distil_alpha<1.0:
+        if self.distil_alpha>0.0:
             contrastive_loss_batch_1 = contrastive_loss(image_features_student, text_features, self.temperature)
             contrastive_loss_batch_2 = contrastive_loss(text_features, image_features_student, self.temperature)
             contrastive_loss_batch = 1/2*(contrastive_loss_batch_1+contrastive_loss_batch_2)
         
-        if self.distil_alpha==1.0:
+        if self.distil_alpha==0.0:
             overall_loss = distill_loss
-        elif self.distil_alpha==0.0:
+        elif self.distil_alpha==1.0:
             overall_loss = contrastive_loss_batch
         else:
-            overall_loss = ((self.distil_alpha) * distill_loss) + ((1- self.distil_alpha) * contrastive_loss_batch)
+            overall_loss = ((1- self.distil_alpha) * distill_loss) + ((self.distil_alpha) * contrastive_loss_batch)
         print("loss in current step: ", overall_loss)
         return overall_loss
 
@@ -312,7 +296,7 @@ class StudentModel(LightningModule):
         logits_student = (text_features @ image_features_student.T) * torch.exp(-self.temperature)
         reverse_logits_student = (image_features_student @ text_features.T) * torch.exp(-self.temperature)
         # Compute loss
-        if self.distil_alpha>0.0:
+        if self.distil_alpha<1.0:
             if args.distillation_loss=="L2":
                 difference_to_teacher = image_features_student-image_features_teacher
                 L2_distance_to_teacher = torch.norm(difference_to_teacher, dim=-1)
@@ -324,16 +308,16 @@ class StudentModel(LightningModule):
             else:
                 print("Select appropriate feature loss")
         # Compute overall loss
-        if self.distil_alpha<1.0:
+        if self.distil_alpha>0.0:
             contrastive_loss_batch_1 = contrastive_loss(image_features_student, text_features, self.temperature)
             contrastive_loss_batch_2 = contrastive_loss(text_features, image_features_student, self.temperature)
             contrastive_loss_batch = 1/2*(contrastive_loss_batch_1+contrastive_loss_batch_2)
-        if self.distil_alpha==1.0:
+        if self.distil_alpha==0.0:
             overall_loss = distill_loss
-        elif self.distil_alpha==0.0:
+        elif self.distil_alpha==1.0:
             overall_loss = contrastive_loss_batch
         else:
-            overall_loss = ((self.distil_alpha) * distill_loss) + ((1- self.distil_alpha) * contrastive_loss_batch)
+            overall_loss = ((1- self.distil_alpha) * distill_loss) + ((self.distil_alpha) * contrastive_loss_batch)
         # normalize features if not done before
         image_features_student_normalized = functional.normalize(image_features_student, p=2, dim=-1)
         image_features_teacher_normalized = functional.normalize(image_features_teacher, p=2, dim=-1)
@@ -348,9 +332,9 @@ class StudentModel(LightningModule):
         top1_accuracy_student = self.top1acc(y_hat, y)
         top1_accuracy_teacher = self.top1acc(y_hat_teacher, y)
         # log losses
-        if self.distil_alpha>0.0:
-            self.log('val_distillation_loss', distill_loss.item(), on_epoch=True, sync_dist=True)
         if self.distil_alpha<1.0:
+            self.log('val_distillation_loss', distill_loss.item(), on_epoch=True, sync_dist=True)
+        if self.distil_alpha>0.0:
             self.log('val_training_loss', contrastive_loss_batch.item(), sync_dist=True)
         self.log('val_overall_loss', overall_loss.item(), sync_dist=True)
         self.log('val_accuracy_student', top1_accuracy_student.item(), sync_dist=True)
@@ -422,7 +406,7 @@ class StudentModel(LightningModule):
         logits_student = (text_features @ image_features_student.T) * torch.exp(-self.temperature)
         reverse_logits_student = (image_features_student @ text_features.T) * torch.exp(-self.temperature)
 
-        if self.distil_alpha>0.0:
+        if self.distil_alpha<1.0:
             if args.distillation_loss=="L2":
                 difference_to_teacher = image_features_student-image_features_teacher
                 L2_distance_to_teacher = torch.norm(difference_to_teacher, dim=-1)
@@ -434,16 +418,16 @@ class StudentModel(LightningModule):
             else:
                 print("Select appropriate feature loss")
         # Compute overall loss
-        if self.distil_alpha<1.0:
+        if self.distil_alpha>0.0:
             contrastive_loss_batch_1 = contrastive_loss(image_features_student, text_features, self.temperature)
             contrastive_loss_batch_2 = contrastive_loss(text_features, image_features_student, self.temperature)
             contrastive_loss_batch = 1/2*(contrastive_loss_batch_1+contrastive_loss_batch_2)
-        if self.distil_alpha==1.0:
+        if self.distil_alpha==0.0:
             overall_loss = distill_loss
-        elif self.distil_alpha==0.0:
+        elif self.distil_alpha==1.0:
             overall_loss = contrastive_loss_batch
         else:
-            overall_loss = ((self.distil_alpha) * distill_loss) + ((1- self.distil_alpha) * contrastive_loss_batch)
+            overall_loss = ((1- self.distil_alpha) * distill_loss) + ((self.distil_alpha) * contrastive_loss_batch)
         # normalize features if not done before
         # image_features_student_normalized = functional.normalize(image_features_student, p=2, dim=-1)
         # image_features_teacher_normalized = functional.normalize(image_features_teacher, p=2, dim=-1)
@@ -461,9 +445,9 @@ class StudentModel(LightningModule):
 
         # log losses and accuracy
         if self.distil_alpha<1.0:
-            self.log("test_training_loss", contrastive_loss_batch, on_epoch=True, on_step=True, sync_dist=True)
-        if self.distil_alpha>0.0:
             self.log("test_distillation_loss", distill_loss, on_epoch=True, on_step=True, sync_dist=True)
+        if self.distil_alpha>0.0:
+            self.log("test_training_loss", contrastive_loss_batch, on_epoch=True, on_step=True, sync_dist=True)
         self.log("test_overall_loss", overall_loss, on_epoch=True, on_step=True, sync_dist=True)
         self.log("test_student_accuracy", top1_accuracy_student, on_epoch=True, on_step=True, sync_dist=True)
         self.log("test_teacher_accuracy", top1_accuracy_teacher, on_epoch=True, on_step=True, sync_dist=True)
@@ -571,7 +555,7 @@ class StudentModel(LightningModule):
 def main(args):
     # # set up logging
     logger = TensorBoardLogger(save_dir=args.logdir, name=args.logname)
-    log_int = 8
+    log_int = 1
     if args.logversion==None:
         args.logversion=logger.version
 
@@ -769,15 +753,19 @@ def main(args):
             model.load_state_dict(checkpoint_loaded["state_dict"])
             model.freeze()
             result_dict = trainer.test(model,dataloaders=test_dataloader)
-            distillation_losses.append(result_dict[0]["test_distillation_loss_epoch"])
-            training_losses.append(result_dict[0]["test_training_loss_epoch"])
+            if args.distil_alpha<1.0:
+                distillation_losses.append(result_dict[0]["test_distillation_loss_epoch"])
+            if args.distil_alpha>0.0:
+                training_losses.append(result_dict[0]["test_training_loss_epoch"])
             overall_losses.append(result_dict[0]["test_overall_loss_epoch"])
             accuracy_student.append(result_dict[0]["test_student_accuracy_epoch"])
             accuracy_teacher.append(result_dict[0]["test_teacher_accuracy_epoch"])
             # top5_accuracy_student.append(result_dict[0]["test_student_accuracy_top5_epoch"])
             # top5_accuracy_teacher.append(result_dict[0]["test_teacher_accuracy_top5_epoch"])
-        print("Distillation losses", distillation_losses)
-        print("Training losses", training_losses)
+        if args.distil_alpha<1.0:
+            print("Distillation losses", distillation_losses)
+        if args.distil_alpha>0.0:
+            print("Training losses", training_losses)
         print("Overall losses", overall_losses)
         print("Accuracy teacher", accuracy_teacher)
         print("Accuracy student", accuracy_student)
