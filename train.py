@@ -461,7 +461,7 @@ class StudentModel(LightningModule):
         """
         scale temperature to be between 1/100 and 100
         """
-        torch.clamp(self.temperature, min=-4.60517018599, max=4.60517018599)
+        self.temperature = torch.clamp(self.temperature, min=-4.60517018599, max=4.60517018599)
 
 
     def get_parameter_groups_for_adamW(self):
