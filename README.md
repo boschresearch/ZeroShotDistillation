@@ -30,3 +30,16 @@ For different domains, select the corresponding dataset option.
 The final step of our framework is domain-specific distillation.
 An example together with the available options is given in the file [example_domain_specific.sh](https://github.com/boschresearch/ZeroShotDistillation/blob/main/example_domain_specific.sh). 
 This step requires the final model checkpoint from step 1 and the synthetic data from step 2.
+
+```
+@article{
+  popp2024feature,
+  title={Feature Distillation Improves Zero-Shot Transfer from Synthetic Images},
+  author={Niclas Popp and Jan Hendrik Metzen and Matthias Hein},
+  journal={Transactions on Machine Learning Research},
+  issn={2835-8856},
+  year={2024},
+  url={https://openreview.net/forum?id=SP8DLl6jgb},
+  note={}
+}
+```
