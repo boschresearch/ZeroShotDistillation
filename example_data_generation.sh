@@ -1,13 +1,8 @@
 python generate_data.py \
 --train /data/pets \
 --dataset pets \
---logdir /logs/pets \
---synthetic_data True \
 --diverse_prompts True \
 --generate_images True \
 --generate_prompts True \
---all_pairs_prompts True \
 --options_per_attribute 5 \
---logname pets_domain_specific \
 --devices 1 \
---nodes 1 \

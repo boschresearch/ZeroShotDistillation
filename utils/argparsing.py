@@ -73,14 +73,14 @@ def add_train_args(parser):
         nargs="+",
         action="append",
         type=int,
-        help="Class ids of the classes to be used in the validation dataset. Will use the imagenet 100 ids in ascending order by default.",
+        help="Class ids of the classes to be used in the validation dataset. Will use the imagenet 100 ids in ascending order by default. Only relevant for ImageNet, all other datasets will use all classes in the dataset.",
     )
     parser.add_argument(
         "--train_class_ids",
         nargs="+",
         action="append",
         type=int,
-        help="Class ids of the classes to be used in the training dataset. Will use ids 0-99 by default.",
+        help="Class ids of the classes to be used in the training dataset. Will use ids 0-99 by default. Only relevant for ImageNet, all other datasets will use all classes in the dataset.",
     )
     parser.add_argument(
         "--val_int",
@@ -93,12 +93,6 @@ def add_train_args(parser):
         type=int,
         default=4,
         help="Number of workers that the dataloader uses. ",
-    )
-    parser.add_argument(
-        "--n_test_samples_from_train",
-        type=int,
-        default=0,
-        help="Number of samples to take from the train set as an optional set for imagenet - optional and not used.",
     )
 # Important training and model hyperparameters
     parser.add_argument(
@@ -135,19 +129,19 @@ def add_train_args(parser):
         "--log_temperature",
         type=float,
         default=0.0,
-        help="Log temperature to use in the contrastive (distillation) loss.",
+        help="Log temperature to use in the contrastive (distillation) loss. For our experiments we used 0.0 (which means a temperature of exp(0.0)=1.0).",
     )
     parser.add_argument(
         "--train_temperature",
         type=str,
-        help="Set to True to use make the temperature a trainable parameter.",
+        help="Set to True to use make the temperature a trainable parameter. For our experiments we used a fixed temperature.",
         default="False",
     )
     parser.add_argument(
         "--distil_alpha",
         type=float_in_range(0.0, 1.0),
         default=0.5,
-        help="Alpha used to balance the knowledge distillation loss against the cross-entropy loss derived from the ground truth. ",
+        help="Alpha used to balance the knowledge distillation loss against the CLIP loss derived from the ground truth. 0.0 means pure feature distillation, 1.0 means pure CLIP loss.",
     )
     parser.add_argument(
         "--contrastive_lambda",
@@ -184,12 +178,6 @@ def add_train_args(parser):
         help="Dimension of the output of the student vision encoder before the projection head.",
     )
     parser.add_argument(
-        "--training_loss",
-        type=str,
-        help="Select supervised training loss from: contrastive, ce (cross-entropy)",
-        required=True,
-    )
-    parser.add_argument(
         "--distillation_loss",
         type=str,
         help="Select distillation loss from: L2, cos, spherical, contrastive",
@@ -199,7 +187,7 @@ def add_train_args(parser):
         "--n_train_images_per_class",
         type=int,
         default=1000,
-        help="Number of images per class in the training set.",
+        help="Number of images per class in the training set. Only used if diverse_prompts is False",
     )
     parser.add_argument(
         "--diverse_prompts",

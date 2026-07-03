@@ -9,7 +9,6 @@ python train.py \
 --dataset datacomp \
 --logdir /logs \
 --logname domain_agnostic_datacomp \
---training_loss CLIP \
 --distillation_loss L2 \
 --distil_alpha 0.0 \
 --learning_rate 0.0005 \

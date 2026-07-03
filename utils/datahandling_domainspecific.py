@@ -49,8 +49,10 @@ def train_and_test_dataloader(args):
             RandomResizedCrop(224),
             RandomHorizontalFlip(),
             ToTensor(),
-            # Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
-            Normalize(mean=(0.48145466, 0.4578275, 0.40821073), std=(0.26862954, 0.26130258, 0.27577711))
+            # Choose between ImageNet and CLIP normalization, both work well: https://github.com/openai/CLIP/issues/20
+            # we used the ImageNet normalization for our experiments
+            Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+            # Normalize(mean=(0.48145466, 0.4578275, 0.40821073), std=(0.26862954, 0.26130258, 0.27577711))
         ]
     )
     if args.dataset=="pets":
@@ -171,10 +173,10 @@ def test_dataloader_other(args):
     """Return validataion/test dataloader for domainspecific datasets."""
     ImageNet_transform = Compose(
         [
-            Resize(256),
+            Resize(224),
             CenterCrop(224),
             ToTensor(),
-            Normalize(mean=(0.48145466, 0.4578275, 0.40821073), std=(0.26862954, 0.26130258, 0.27577711))
+            Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
         ]
     )
     if args.dataset=="pets":
@@ -222,8 +224,7 @@ def train_dataloader_other(args):
             RandomResizedCrop(224),
             RandomHorizontalFlip(),
             ToTensor(),
-            # Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
-            Normalize(mean=(0.48145466, 0.4578275, 0.40821073), std=(0.26862954, 0.26130258, 0.27577711))
+            Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
         ]
     )
     if args.dataset=="pets":

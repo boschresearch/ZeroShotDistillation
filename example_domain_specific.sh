@@ -14,7 +14,6 @@ python train.py \
 --diverse_prompts True \
 --use_diverse_prompts_for_inference True \
 --options_per_attribute 15 \
---training_loss CLIP \
 --distillation_loss L2 \
 --distil_alpha 0.0 \
 --learning_rate 0.0005 \

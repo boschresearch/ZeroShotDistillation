@@ -22,7 +22,6 @@ import os
 
 from transformers import AutoModelForCausalLM, AutoTokenizer
 from tqdm import tqdm
-from nltk.corpus import wordnet as wn
 from allpairspy import AllPairs
 from math import ceil
 from utils.labels import (
@@ -105,8 +104,20 @@ def simple_prompt_eurosat(id):
     return class_name
 
 def photo_prompt_eurosat(id):
-    class_name = AIRCRAFT_LABELS[id]
+    class_name = EUROSAT_LABELS[id]
     prompt = "a centered satellite photo of a " + class_name
+    return prompt
+
+"""
+    Utilities for IMAGENET
+"""
+def simple_prompt_imagenet(id):
+    class_name = IMAGENET_LABELS[id]
+    return class_name
+
+def photo_prompt_imagenet(id):
+    class_name = IMAGENET_LABELS[id]
+    prompt = "a photo of a " + class_name
     return prompt
 """
     Utilities for Describable Textures
@@ -272,7 +283,7 @@ def create_angles(N,class_name,LLM,tokenizer):
 """
     Calls to LLama
 """
-def llama_superclass(dataset,class_ids,LLM_model_id,LLM_local,tokenizer_local):
+def llama_superclass(dataset,class_ids,LLM_local,tokenizer_local):
     """Get superclasses for caption generation with Llama."""
     # overall attribute collections
     llama_superclasses=[]
@@ -325,7 +336,7 @@ def create_locations_llama_repeated(n_repeats,class_name,superclass_name,LLM_loc
             locations = [o[3:] for o in locations]
             locations = locations[2:7]
         locations_global = locations_global + locations
-    print(locations_global)
+    print("Options for locations: ", locations_global)
     return locations_global
 
 def create_daytimes_llama_repeated(n_repeats,class_name,superclass_name,LLM_local,tokenizer_local):
@@ -339,7 +350,7 @@ def create_daytimes_llama_repeated(n_repeats,class_name,superclass_name,LLM_loca
     for i in range(n_repeats):
         daytimes=[]
         while (len(daytimes)!=5):
-            print("Rejected daytimes")
+            print("Rejected daytimes due to not enough options, repeating...")
             print(daytimes)
             outputs = LLM_local.generate(prompt, max_new_tokens=128, do_sample=True, temperature=0.7, top_k=50, top_p=0.95)
             response_text = tokenizer_local.batch_decode(outputs, skip_special_tokens=True)[0]
@@ -349,7 +360,7 @@ def create_daytimes_llama_repeated(n_repeats,class_name,superclass_name,LLM_loca
             daytimes = [o[3:] for o in daytimes]
             daytimes = daytimes[2:7]
         daytimes_global = daytimes_global + daytimes
-    print(daytimes_global)
+    print("Options for daytimes: ", daytimes_global)
     return daytimes_global
 
 def create_positions_llama_repeated(n_repeats,class_name,superclass_name,LLM_local,tokenizer_local):
@@ -363,7 +374,7 @@ def create_positions_llama_repeated(n_repeats,class_name,superclass_name,LLM_loc
     for i in range(n_repeats):
         positions=[]
         while (len(positions)!=5):
-            print("Rejected positions")
+            print("Rejected positions due to not enough options, repeating...")
             print(positions)
             outputs = LLM_local.generate(prompt, max_new_tokens=128, do_sample=True, temperature=0.7, top_k=50, top_p=0.95)
             response_text = tokenizer_local.batch_decode(outputs, skip_special_tokens=True)[0]
@@ -373,7 +384,7 @@ def create_positions_llama_repeated(n_repeats,class_name,superclass_name,LLM_loc
             positions = [o[3:] for o in positions]
             positions = positions[2:7]
         positions_global = positions_global + positions
-    print(positions_global)
+    print("Options for positions: ", positions_global)
     return positions_global
 
 def create_angles_llama_repeated(n_repeats,class_name,superclass_name,LLM_local,tokenizer_local):
@@ -387,7 +398,7 @@ def create_angles_llama_repeated(n_repeats,class_name,superclass_name,LLM_local,
     for i in range(n_repeats):
         angles=[]
         while (len(angles)!=5):
-            print("Rejected angles")
+            print("Rejected angles due to not enough options, repeating...")
             print(angles)
             outputs = LLM_local.generate(prompt, max_new_tokens=128, do_sample=True, temperature=0.7, top_k=50, top_p=0.95)
             response_text = tokenizer_local.batch_decode(outputs, skip_special_tokens=True)[0]
@@ -397,7 +408,7 @@ def create_angles_llama_repeated(n_repeats,class_name,superclass_name,LLM_local,
             angles = [o[3:] for o in angles]
             angles = angles[2:7]
         angles_global = angles_global + angles
-    print(angles_global)
+    print("Options for angles: ", angles_global)
     return angles_global
 
 def create_color_llama_repeated(n_repeats,class_name,superclass_name,LLM_local,tokenizer_local):
@@ -411,7 +422,7 @@ def create_color_llama_repeated(n_repeats,class_name,superclass_name,LLM_local,t
     for i in range(n_repeats):
         colors=[]
         while (len(colors)!=5):
-            print("Rejected colors")
+            print("Rejected colors due to not enough options, repeating...")
             print(colors)
             outputs = LLM_local.generate(prompt, max_new_tokens=128, do_sample=True, temperature=0.7, top_k=50, top_p=0.95)
             response_text = tokenizer_local.batch_decode(outputs, skip_special_tokens=True)[0]
@@ -421,7 +432,7 @@ def create_color_llama_repeated(n_repeats,class_name,superclass_name,LLM_local,t
             colors = [o[3:] for o in colors]
             colors = colors[2:7]
         colors_global = colors_global + colors
-    print(colors_global)
+    print("Options for colors: ", colors_global)
     return colors_global
 
 def create_servings_llama_repeated(n_repeats,class_name,superclass_name,LLM_local,tokenizer_local,superclass_llama):
@@ -435,7 +446,7 @@ def create_servings_llama_repeated(n_repeats,class_name,superclass_name,LLM_loca
     for i in range(n_repeats):
         colors=[]
         while (len(colors)!=5):
-            print("Rejected colors")
+            print("Rejected colors due to not enough options, repeating...")
             print(colors)
             outputs = LLM_local.generate(prompt, max_new_tokens=128, do_sample=True, temperature=0.7, top_k=50, top_p=0.95)
             response_text = tokenizer_local.batch_decode(outputs, skip_special_tokens=True)[0]
@@ -445,7 +456,7 @@ def create_servings_llama_repeated(n_repeats,class_name,superclass_name,LLM_loca
             colors = [o[3:] for o in colors]
             colors = colors[2:7]
         colors_global = colors_global + colors
-    print(colors_global)
+    print("Options for colors: ", colors_global)
     return colors_global
 
 def create_fabric_llama_repeated(n_repeats,class_name,superclass_name,LLM_local,tokenizer_local):
@@ -459,7 +470,7 @@ def create_fabric_llama_repeated(n_repeats,class_name,superclass_name,LLM_local,
     for i in range(n_repeats):
         colors=[]
         while (len(colors)!=5):
-            print("Rejected colors")
+            print("Rejected colors due to not enough options, repeating...")
             print(colors)
             outputs = LLM_local.generate(prompt, max_new_tokens=128, do_sample=True, temperature=0.7, top_k=50, top_p=0.95)
             response_text = tokenizer_local.batch_decode(outputs, skip_special_tokens=True)[0]
@@ -469,7 +480,7 @@ def create_fabric_llama_repeated(n_repeats,class_name,superclass_name,LLM_local,
             colors = [o[3:] for o in colors]
             colors = colors[2:7]
         colors_global = colors_global + colors
-    print(colors_global)
+    print("Options for colors:", colors_global)
     return colors_global
 
 def create_object_llama_repeated(n_repeats,class_name,superclass_name,LLM_local,tokenizer_local):
@@ -483,7 +494,7 @@ def create_object_llama_repeated(n_repeats,class_name,superclass_name,LLM_local,
     for i in range(n_repeats):
         colors=[]
         while (len(colors)!=5):
-            print("Rejected colors")
+            print("Rejected colors due to not enough options, repeating...")
             print(colors)
             outputs = LLM_local.generate(prompt, max_new_tokens=128, do_sample=True, temperature=0.7, top_k=50, top_p=0.95)
             response_text = tokenizer_local.batch_decode(outputs, skip_special_tokens=True)[0]
@@ -493,15 +504,15 @@ def create_object_llama_repeated(n_repeats,class_name,superclass_name,LLM_local,
             colors = [o[3:] for o in colors]
             colors = colors[2:7]
         colors_global = colors_global + colors
-    print(colors_global)
+    print("Options for colors: ", colors_global)
     return colors_global
 
-def llama_attributes_repeated(dataset,class_ids,LLM_model_id,max_n_tokens,temp,k,p,savedir,n_repeats):
+def llama_attributes_repeated(dataset,class_ids,savedir,n_repeats):
     checkpoint = "meta-llama/Llama-2-7b-chat-hf"
-    tokenizer = AutoTokenizer.from_pretrained(checkpoin)
+    tokenizer = AutoTokenizer.from_pretrained(checkpoint)
     LLM = AutoModelForCausalLM.from_pretrained(checkpoint, device_map="auto") 
     # get precise superclasses from LLM
-    superclasses_llama=llama_superclass(dataset,class_ids,LLM_model_id,LLM,tokenizer)
+    superclasses_llama=llama_superclass(dataset,class_ids,LLM,tokenizer)
     # overall attribute collections
     llama_locations=[]
     llama_daytimes=[]
@@ -563,7 +574,7 @@ def get_all_pairs_length(options_per_attribute):
         N+=1
     return N
 
-def generate_prompts_all_pairs_repeated(dataset,class_ids,LLM_model_id,max_n_tokens,temp,k,p,savedir,options_per_attribute):
+def generate_prompts_all_pairs_repeated(dataset,class_ids,savedir,options_per_attribute):
     """Create cations based on the above sampled attributes."""
     for class_id in class_ids:
         path = os.path.join(str(savedir[0]), "captions", f"{class_id:03d}")
@@ -582,7 +593,7 @@ def generate_prompts_all_pairs_repeated(dataset,class_ids,LLM_model_id,max_n_tok
     diverse_prompts=["" for x in range(len(class_ids)*prompts_per_class)]
     print("Prompts per class: ",prompts_per_class)
     # Note: for cars, flowers, food positions actually corresponds to colors
-    llama_superclasses, llama_locations,llama_daytimes,llama_positions,llama_angles=llama_attributes_repeated(dataset,class_ids,LLM_model_id,max_n_tokens,temp,k,p,savedir,n_repeats)
+    llama_superclasses, llama_locations,llama_daytimes,llama_positions,llama_angles=llama_attributes_repeated(dataset,class_ids,savedir,n_repeats)
     
     for index in tqdm(range(len(class_ids))):
         class_name = simple_prompt(dataset,class_ids[index])

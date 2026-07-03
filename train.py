@@ -116,7 +116,7 @@ def string_with_spaces(string):
 def contrastive_loss(features1, features2, log_temperature):
     """loss for contrastive training."""
     # similarity matrix
-    token_similarity = (features1 @ features2.T) * torch.exp(-log_temperature)
+    token_similarity = (features1 @ features2.T) * torch.exp(log_temperature)
     # columnwise reduction of similarity matrix (i.e. over features2)
     dividend=torch.sum(torch.exp(token_similarity),dim=-1)
     # diagonal = similariy between same entries in features1 and token2
@@ -228,19 +228,19 @@ class StudentModel(LightningModule):
                 text_features_normalized = functional.normalize(text_features, p=2, dim=-1)
                 text_features = text_features_normalized
                 # Compute logits of the teacher 
-                logits_teacher = (text_features @ image_features_teacher.T) * torch.exp(-self.temperature)
+                logits_teacher = (text_features @ image_features_teacher.T) * torch.exp(self.temperature)
             else:
                 text_tokenized = self.tokenizer(y).to(device)
                 text_features = self.teacher_model.encode_text(text_tokenized)
                 text_features_normalized = functional.normalize(text_features, p=2, dim=-1)
                 text_features = text_features_normalized
-            logits_teacher = (text_features @ image_features_teacher.T) * torch.exp(-self.temperature)
+            logits_teacher = (text_features @ image_features_teacher.T) * torch.exp(self.temperature)
         # Compute image embeddings of the student
         image_features_student = self(x)
         # Normlize student features
         image_features_student_normalized = functional.normalize(image_features_student, p=2, dim=-1)
         image_features_student = image_features_student_normalized
-        logits_student = (text_features @ image_features_student.T) * torch.exp(-self.temperature)
+        logits_student = (text_features @ image_features_student.T) * torch.exp(self.temperature)
 
         # Compute distillation loss
         if self.distil_alpha<1.0:
@@ -287,14 +287,14 @@ class StudentModel(LightningModule):
         text_features_normalized = functional.normalize(text_features, p=2, dim=-1)
         image_features_teacher = image_features_teacher_normalized
         text_features = text_features_normalized
-        logits_teacher = (text_features @ image_features_teacher.T) * torch.exp(-self.temperature)
-        reverse_logits_teacher = (image_features_teacher @ text_features.T) * torch.exp(-self.temperature)
+        logits_teacher = (text_features @ image_features_teacher.T) * torch.exp(self.temperature)
+        reverse_logits_teacher = (image_features_teacher @ text_features.T) * torch.exp(self.temperature)
         image_features_student = self(x)
         image_features_student_normalized = functional.normalize(image_features_student, p=2, dim=-1)
         image_features_student = image_features_student_normalized
         #Compute loss as in training
-        logits_student = (text_features @ image_features_student.T) * torch.exp(-self.temperature)
-        reverse_logits_student = (image_features_student @ text_features.T) * torch.exp(-self.temperature)
+        logits_student = (text_features @ image_features_student.T) * torch.exp(self.temperature)
+        reverse_logits_student = (image_features_student @ text_features.T) * torch.exp(self.temperature)
         # Compute loss
         if self.distil_alpha<1.0:
             if args.distillation_loss=="L2":
@@ -396,15 +396,15 @@ class StudentModel(LightningModule):
         text_features_normalized /= text_features_normalized.norm(dim=-1, keepdim=True)
         image_features_teacher = image_features_teacher_normalized
         text_features = text_features_normalized
-        logits_teacher = (text_features @ image_features_teacher.T) * torch.exp(-self.temperature)
-        reverse_logits_teacher = (image_features_teacher @ text_features.T) * torch.exp(-self.temperature)
+        logits_teacher = (text_features @ image_features_teacher.T) * torch.exp(self.temperature)
+        reverse_logits_teacher = (image_features_teacher @ text_features.T) * torch.exp(self.temperature)
         image_features_student = self(x)
         image_features_student_normalized=image_features_student
         image_features_student_normalized /= image_features_student_normalized.norm(dim=-1, keepdim=True)
         image_features_student = image_features_student_normalized
         #Compute loss as in training
-        logits_student = (text_features @ image_features_student.T) * torch.exp(-self.temperature)
-        reverse_logits_student = (image_features_student @ text_features.T) * torch.exp(-self.temperature)
+        logits_student = (text_features @ image_features_student.T) * torch.exp(self.temperature)
+        reverse_logits_student = (image_features_student @ text_features.T) * torch.exp(self.temperature)
 
         if self.distil_alpha<1.0:
             if args.distillation_loss=="L2":
@@ -461,7 +461,7 @@ class StudentModel(LightningModule):
         """
         scale temperature to be between 1/100 and 100
         """
-        self.temperature = torch.clamp(self.temperature, min=-4.60517018599, max=4.60517018599)
+        self.temperature.data = torch.clamp(self.temperature.data, min=-4.60517018599, max=4.60517018599)
 
 
     def get_parameter_groups_for_adamW(self):
@@ -708,22 +708,28 @@ def main(args):
             out_dir = os.path.join(in_dir, "images")
             test_transform = Compose(
                         [
-                            Resize(256),
+                            Resize(224), # commonly 256 is used but for the paper we used 224 here which cuts less from the background in the centercrop
                             CenterCrop(224),
                             ToTensor(),
-                            #Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
-                            Normalize(mean=(0.48145466, 0.4578275, 0.40821073), std=(0.26862954, 0.26130258, 0.27577711))
+                            # Choose between ImageNet and CLIP normalization, both work well: https://github.com/openai/CLIP/issues/20
+                            # we used the ImageNet normalization for our experiments
+                            # the teacher model was also evaluated with theses normalization constants
+                            Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+                            #Normalize(mean=(0.48145466, 0.4578275, 0.40821073), std=(0.26862954, 0.26130258, 0.27577711))
                         ]
                     )
             test_data=ImageFolder(out_dir,transform=test_transform)
         else:
             test_transform = Compose(
                     [
-                        Resize(256), # for the paper we used 224 here which cuts less from the background in the centercrop
+                        Resize(224), # commonly 256 is used but for the paper we used 224 here which cuts less from the background in the centercrop
                         CenterCrop(224),
                         ToTensor(),
-                        #Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
-                        Normalize(mean=(0.48145466, 0.4578275, 0.40821073), std=(0.26862954, 0.26130258, 0.27577711))
+                        # Choose between ImageNet and CLIP normalization, both work well: https://github.com/openai/CLIP/issues/20
+                        # we used the ImageNet normalization for our experiments
+                        # the teacher model was also evaluated with theses normalization constants
+                        Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+                        #Normalize(mean=(0.48145466, 0.4578275, 0.40821073), std=(0.26862954, 0.26130258, 0.27577711))
                     ]
                 )
             if args.dataset=="pets":
